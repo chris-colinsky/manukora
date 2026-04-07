@@ -10,7 +10,7 @@ This is Part 1 of the [Submission Guidlines](../_docs/submission_guidelines.md)
 
 Do not feed raw CSV data to an LLM. LLMs are prone to arithmetic hallucinations. The system must follow a modular, decoupled pipeline utilizing a REST API and a separate frontend:
 
-1. **Data Processing Engine (Python/Pandas):** The backend reads a locally mounted CSV file, aggregates omni-channel sales, calculates historical run-rates, projects future demand, and calculates exact reorder quantities using standard supply chain formulas.  
+1. **Data Processing Engine (Python/Pandas):** The backend reads a locally mounted CSV file, aggregates omnichannel sales, calculates historical run-rates, projects future demand, and calculates exact reorder quantities using standard supply chain formulas.  
 2. **API & Reasoning Layer (FastAPI + LLM):** A FastAPI microservice that exposes a simple endpoint to trigger the process, runs the Pandas calculations, transforms the output into a JSON payload, and calls the LLM with a strict prompt to generate the narrative.  
 3. **Presentation Layer (Streamlit):** A lightweight frontend that acts as the executive dashboard. It requests the data from the backend API and renders the returned JSON insights and Markdown briefing with zero configuration required by the user.
 
@@ -38,7 +38,7 @@ The backend engine must implement the following calculations for *each SKU* usin
   - Revenue_M4 = Total_M4 * Retail_Price_USD  
 - **What it represents:** The combined sales volume across all platforms and the gross revenue generated in the most recent month.  
 - **Insights:** Identifies the true top-performing SKUs for the business by revenue and overall volume, removing channel-specific silos.  
-- **LLM Instructions:** The LLM should use Revenue_M4 to identify and highlight the top 2-3 performing SKUs in the "Top Movers" section, discussing their total omni-channel volume.
+- **LLM Instructions:** The LLM should use Revenue_M4 to identify and highlight the top 2-3 performing SKUs in the "Top Movers" section, discussing their total omnichannel volume.
 
 ### B. Growth & Projections (The Seasonality Caveat)
 
@@ -86,7 +86,7 @@ The backend engine must implement the following calculations for *each SKU* usin
   - Filter for Is_At_Risk == True.  
   - Air_Freight_Candidate = SKU with MAX(Revenue_M4) among the filtered list.  
 - **What it represents:** The single most critical SKU to the business's top line that is currently at risk of stocking out.  
-- **Architecture Rule (CRITICAL):** Do **NOT** pass this calculated Air_Freight_Candidate to the LLM in the JSON payload. This is our "Ground Truth" value. We will ask the LLM to deduce this independently in the prompt, and use this Pandas-calculated value in our deepeval test suite to validate the LLM's reasoning capabilities.
+- **Architecture Rule (CRITICAL):** Do **NOT** pass this calculated Air_Freight_Candidate to the LLM in the JSON payload. This is our "Ground Truth" value. We will ask the LLM to deduce this independently in the prompt and use this Pandas-calculated value in our deepeval test suite to validate the LLM's reasoning capabilities.
 
 ## 4. Technical Requirements & Modularity
 
@@ -94,34 +94,44 @@ The backend engine must implement the following calculations for *each SKU* usin
 * **Package Manager:** uv (Use uv init and uv add to manage dependencies in pyproject.toml)  
 * **Libraries:** fastapi, uvicorn, starlette (for Config), pandas, anthropic, openai (for local dev only), streamlit, requests, pytest, pydantic, tenacity, structlog, opentelemetry-api, opentelemetry-sdk, opentelemetry-exporter-otlp, langfuse, deepeval.  
 * **Code Structure (CRITICAL):** The code must enforce a strict separation of concerns into a backend and frontend directory structure. Each microservice must have its own dedicated test suite. Additionally, it must incorporate robust testing, CI/CD, and quality gates:  
+  ``` text
   project_root/  
   ├── .github/  
   │   └── workflows/  
-  │       └── ci.yml         # GitHub Actions pipeline for tests & linting  
-  ├── backend/  
-  │   ├── data/  
-  │   │   └── sales-data.csv # Bundled mock data for zero-click testing  
-  │   ├── tests/             # Backend unit & integration tests (pytest)  
-  │   │   └── test_evals.py  # LLM validation & guardrail tests (deepeval)
-  │   ├── api.py             # FastAPI application and routes  
-  │   ├── config.py          # Environment variable management via Starlette Config  
-  │   ├── schemas.py         # Pydantic models for data validation  
-  │   ├── sop_engine.py      # Pandas calculations  
-  │   ├── llm_service.py     # Factory pattern for Local OpenAI vs Prod Anthropic  
-  │   ├── telemetry.py       # OpenTelemetry, Structlog, & Langfuse setup  
-  │   ├── pyproject.toml     # Backend dependencies managed by uv  
-  │   ├── uv.lock            # Backend dependency lockfile  
-  │   └── Dockerfile         # FastAPI Dockerfile  
-  ├── frontend/  
-  │   ├── tests/             # Frontend UI tests (pytest + Streamlit AppTest)  
-  │   ├── app.py             # Streamlit UI (makes requests to FastAPI)  
-  │   ├── pyproject.toml     # Frontend dependencies managed by uv  
-  │   ├── uv.lock            # Frontend dependency lockfile  
-  │   └── Dockerfile         # Streamlit Dockerfile  
-  ├── .pre-commit-config.yaml# Pre-commit hooks configuration  
-  ├── Makefile               # Developer CLI commands wrapper  
-  ├── README.md              # Comprehensive project documentation  
-  └── docker-compose.yml     # Orchestrates both services for local dev
+  │       └── ci.yml                                # GitHub Actions pipeline for tests & linting 
+  ├── _plans/
+  │   └── implementation.md                         # Implementation plan for the project 
+  ├── _reqs/
+  │   ├── submission-strategy-part-1.md             # Product Requirements Document 
+  ├── _docs/
+  │   ├── adr/
+  │   │   └── 0001-calculate-first-reason-second.md # Architecture Decision Record
+  │   └── architecture.mmd                          # Mermaid.js architecture diagram
+  ├── backend/
+  │   ├── data/
+  │   │   └── sales-data.csv                        # Bundled mock data for zero-click testing
+  │   ├── tests/                                    # Backend unit & integration tests (pytest)
+  │   │   └── test_evals.py                         # LLM validation & guardrail tests (deepeval)
+  │   ├── api.py                                    # FastAPI application and routes
+  │   ├── config.py                                 # Environment variable management via Starlette Config
+  │   ├── schemas.py                                # Pydantic models for data validation
+  │   ├── sop_engine.py                             # Pandas calculations
+  │   ├── llm_service.py                            # Factory pattern for Local OpenAI vs Prod Anthropic
+  │   ├── telemetry.py                              # OpenTelemetry, Structlog, & Langfuse setup
+  │   ├── pyproject.toml                            # Backend dependencies managed by uv
+  │   ├── uv.lock                                   # Backend dependency lockfile
+  │   └── Dockerfile                                # FastAPI Dockerfile
+  ├── frontend/
+  │   ├── tests/                                    # Frontend UI tests (pytest + Streamlit AppTest)
+  │   ├── app.py                                    # Streamlit UI (makes requests to FastAPI)
+  │   ├── pyproject.toml                            # Frontend dependencies managed by uv
+  │   ├── uv.lock                                   # Frontend dependency lockfile
+  │   └── Dockerfile                                # Streamlit Dockerfile
+  ├── .pre-commit-config.yaml                       # Pre-commit hooks configuration
+  ├── Makefile                                      # Developer CLI commands wrapper
+  ├── README.md                                     # Comprehensive project documentation
+  └── docker-compose.yml                            # Orchestrates both services for local dev
+  ```
 
 ## 5. Code Quality, Resiliency, Observability & Testing
 
@@ -140,7 +150,7 @@ To prove production-readiness, the following engineering standards are required:
   - Use pydantic in schemas.py to validate the CSV structure *after* Pandas loads it but *before* the calculations. If a column is missing or data types are wrong, the API must return a clean 500 Internal Server Error with a descriptive log.
 - **LLM Evaluation & Guardrails (DeepEval):**  
   - Use deepeval to create an automated evaluation test for the LLM output.  
-  - **The Test:** The test must extract the LLM's recommended "Air Freight SKU" from its generated markdown and assert that it matches the Air_Freight_Candidate calculated deterministically by Pandas in Section 3.E. This proves the LLM is doing genuine reasoning and aligns with the mathematical ground truth.  
+  - **The Test:** The test must extract the LLM's recommended "Air Freight SKU" from its generated Markdown and assert that it matches the Air_Freight_Candidate calculated deterministically by Pandas in Section 3.E. This proves the LLM is doing genuine reasoning and aligns with the mathematical ground truth.  
 - **Makefile:** Provide a Makefile at the root to abstract standard workflows. Required commands:  
   - make test (runs pytest suite with coverage across both frontend and backend)  
   - make lint (runs formatters and linters)  
@@ -150,7 +160,7 @@ To prove production-readiness, the following engineering standards are required:
   - make up (runs docker-compose up)  
 - **Testing & Coverage:** Minimum **70% test coverage** is mandated for both the backend and frontend.  
   - Use pytest and pytest-cov.  
-  - **Backend Tests:** The core calculations inside sop_engine.py (pandas logic) must be heavily unit-tested with mocked data to prove the supply chain formulas work correctly, including edge cases like Projected_M5_Sales = 0 (Division by Zero). API endpoints should be tested using TestClient from FastAPI.  
+  - **Backend Tests:** The core calculations inside sop_engine.py (Pandas logic) must be heavily unit-tested with mocked data to prove the supply chain formulas work correctly, including edge cases like Projected_M5_Sales = 0 (Division by Zero). API endpoints should be tested using TestClient from FastAPI.  
   - **Frontend Tests:** The Streamlit UI should be tested using Streamlit's built-in AppTest framework via pytest to verify rendering and API integration behavior without needing a browser.  
 - **Pre-Commit Hooks:** Include a .pre-commit-config.yaml. Before any code is committed, it must automatically pass:  
   - Code Formatting: black  
@@ -184,7 +194,7 @@ The app.py Streamlit frontend is strictly a frictionless presentation layer. It 
 
 - Provide a clean UI that **automatically** triggers the generation process on initial load (use @st.cache_data to ensure the API is only hit once per session/cache expiry, rather than on every UI re-render).  
 - Send a GET request to the FastAPI backend URL (configurable via env vars) as soon as the page opens.  
-- While waiting for the backend, show a professional loading state (e.g., st.spinner("Analyzing omni-channel data and generating S&OP insights...")).  
+- While waiting for the backend, show a professional loading state (e.g., st.spinner("Analyzing omnichannel data and generating S&OP insights...")).  
 - Display the LLM-generated briefing in the main content area using st.markdown().  
 - Use the metrics and red_flag_data from the JSON response to render top-level KPI widgets and a Pandas dataframe showing the SKUs at risk below the briefing. Include robust error handling if the API fails.
 - **Actionability Feature:** Add a prominent "Download Draft POs (CSV)" button using st.download_button that interfaces with the /api/v1/download-pos endpoint. This transforms the dashboard from a passive report into an active workflow driver, allowing executives to act immediately on the insights.
@@ -200,7 +210,7 @@ To avoid introducing heavyweight abstraction layers (like LiteLLM proxies) while
 
 **System Prompt:**
 
-"You are an expert Supply Chain & S&OP Director for a highly successful DTC honey brand. Your task is to review the weekly pre-calculated inventory data and write a concise, highly actionable S&OP briefing for the executive team. The briefing must take under 5 minutes to read. Use a professional, data-driven, yet accessible tone. Use markdown formatting for readability."
+"You are an expert Supply Chain & S&OP Director for a highly successful DTC honey brand. Your task is to review the weekly pre-calculated inventory data and write a concise, highly actionable S&OP briefing for the executive team. The briefing must take under 5 minutes to read. Use a professional, data-driven, yet accessible tone. Use Markdown formatting for readability."
 
 **User Prompt:**
 
@@ -211,7 +221,7 @@ To avoid introducing heavyweight abstraction layers (like LiteLLM proxies) while
 3. Create a 'Red Flags' section for SKUs falling below target cover. Note that projections are based on trailing 4-month momentum; explicitly remind the team to consider upcoming seasonality factors.  
 4. Make reorder recommendations for at least 3 SKUs. Use the 'Suggested_Reorder_Qty' provided, but write out the genuine business reasoning for *why* we are ordering that amount (e.g., referencing lead times, current pipeline, and target cover). If multiple items need reordering, prioritize them: reason about which one is the highest priority based on its revenue contribution (Revenue_M4) vs. its lead time, assuming a constrained cash-flow environment.  
 5. Acknowledge the 'Bioactive Blend' line as new Q1 2026 products. Explain to the team that to avoid over-ordering on an initial launch spike, we have conservatively modeled their future demand using their current M4 baseline rather than compounding their initial MoM growth.
-6. **Strategic Priority (Air Freight):** Based on the data provided, identify the single most critical SKU that is currently at risk. Weigh its recent revenue contribution (Revenue_M4) against its stock risk. Make a recommendation on whether we should pay a premium to air-freight this specific item to protect top-line revenue, and justify your choice logically.
+6. **Strategic Priority (Air Freight):** Based on the data provided, identify the single most critical SKU that is currently at risk. Weigh its recent revenue contribution (Revenue_M4) against its stock risk. Make a recommendation on whether we should pay a premium to air-freight this specific item to protect top-line revenue and justify your choice logically.
 
 DATA PAYLOAD:
 
@@ -242,3 +252,19 @@ Deploying microservices on Fly.io involves creating two separate apps.
 
 1. cd backend && fly launch (set API keys and telemetry secrets).  
 2. cd frontend && fly launch (set BACKEND_URL environment variable to point to the backend Fly.io internal/external URL).
+
+## 10. Documentation Standards
+
+The generated repository must adhere to the following documentation standards:
+
+- **Robust README.md**: Must be highly polished and include:  
+  - **Badges**: CI/CD build status, test coverage percentage, and Python version compatibility via shields.io.  
+  - **Project Overview**: A TL;DR of the architecture and business purpose.  
+  - **Architecture Diagram**: An embedded Mermaid.js (architecture.mmd) diagram visually mapping the data flow (CSV -> FastAPI + Pandas -> Langfuse/Anthropic -> Streamlit).  
+  - **Setup Instructions**: Explicit, copy-pasteable commands for both local development using uv and containerized workflows via docker-compose.  
+  - **Environment Variables Table**: A Markdown table documenting every required variable, its purpose, and its default fallback value.  
+- **Architecture Decision Records (ADR)**: Include a docs/adr/0001-calculate-first-reason-second.md file. This document must explicitly outline the decision to separate the Pandas math logic from the LLM prompt, explaining the risks of LLM arithmetic hallucinations and the benefit of deterministic supply chain formulas.  
+- **API Documentation (Swagger UI)**: Ensure FastAPI is configured to auto-generate the OpenAPI schema so the hiring manager can test the backend directly at the /docs endpoint.  
+- **Inline Code Documentation**:  
+  - Enforce Google-style Docstrings for all classes and functions.  
+  - All functions must utilize explicit Python type hints (validated by mypy in the pre-commit hook).
