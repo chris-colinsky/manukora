@@ -5,19 +5,19 @@
 [![Frontend Coverage](https://img.shields.io/badge/frontend%20coverage-95%25-brightgreen)](https://github.com/mbt-commander/honey)
 [![Python](https://img.shields.io/badge/python-3.12-blue)](https://python.org)
 
-An AI-powered weekly S&OP briefing system for a DTC honey brand. A FastAPI backend runs all supply chain maths deterministically in Pandas, then passes verified data to Claude for executive narrative. A Streamlit frontend auto-loads the briefing — no clicks required.
+An AI-powered weekly S&OP briefing system for a DTC honey brand. A FastAPI backend runs all supply chain maths deterministically in Pandas, then passes verified data to Claude for executive narrative. A Streamlit frontend autoloads the briefing — no clicks required.
 
 ## Architecture
 
 ```mermaid
 graph LR
-    CSV["📄 sales-data.csv"]
-    ENGINE["🐼 sop_engine.py\nPandas calculations"]
-    API["⚡ FastAPI\napi.py"]
-    LLM["🤖 Anthropic Claude\nclaude-sonnet-4-6"]
-    UI["📊 Streamlit\napp.py"]
-    LANGFUSE["🔍 Langfuse\nLLM observability"]
-    HYPERDX["📡 HyperDX\nOTLP traces & logs"]
+    CSV["sales-data.csv"]
+    ENGINE["sop_engine.py\nPandas calculations"]
+    API["FastAPI\napi.py"]
+    LLM["Anthropic Claude\nclaude-sonnet-4-6"]
+    UI["Streamlit\napp.py"]
+    LANGFUSE["Langfuse\nLLM observability"]
+    HYPERDX["HyperDX\nOTLP traces & logs"]
 
     CSV --> ENGINE
     ENGINE --> API
@@ -84,35 +84,35 @@ cd backend && uv run pytest tests/test_sop_engine.py::test_bioactive_blend_proje
 
 ## API Endpoints
 
-| Endpoint | Method | Description |
-|---|---|---|
-| `/api/v1/generate-sop` | GET | Run full S&OP pipeline; returns JSON with metrics, red flags, and LLM briefing |
-| `/api/v1/download-pos` | GET | Download draft Purchase Orders CSV (all SKUs with `Suggested_Reorder_Qty > 0`) |
-| `/docs` | GET | Interactive Swagger UI |
+| Endpoint               | Method | Description                                                                    |
+|------------------------|--------|--------------------------------------------------------------------------------|
+| `/api/v1/generate-sop` | GET    | Run full S&OP pipeline; returns JSON with metrics, red flags, and LLM briefing |
+| `/api/v1/download-pos` | GET    | Download draft Purchase Orders CSV (all SKUs with `Suggested_Reorder_Qty > 0`) |
+| `/docs`                | GET    | Interactive Swagger UI                                                         |
 
 ## Environment Variables
 
 ### Backend
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `ENV` | Yes | `local` | `local` uses OpenAI-compatible local LLM; `production` uses Anthropic |
-| `DATA_FILE_PATH` | No | `data/sales-data.csv` | Path to the sales data CSV |
-| `ANTHROPIC_API_KEY` | Production only | — | Anthropic API key for Claude |
-| `LOCAL_LLM_BASE_URL` | Local only | `http://localhost:1234/v1` | LM Studio or vLLM base URL |
-| `LOCAL_LLM_MODEL` | Local only | `local-model` | Model name for local inference |
-| `HYPERDX_API_KEY` | No | — | HyperDX API key (used as `Authorization` header; omit for local self-hosted) |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | No | — | OTLP endpoint — HyperDX OTLP ingestion port is `4318` (not the UI port `8080`) |
-| `OTEL_SERVICE_NAME` | No | `honey-backend` | Service name in traces |
-| `LANGFUSE_PUBLIC_KEY` | No | — | Langfuse project public key |
-| `LANGFUSE_SECRET_KEY` | No | — | Langfuse project secret key |
-| `LANGFUSE_HOST` | No | `http://localhost:3000` | Langfuse host URL |
+| Variable                      | Required        | Default                    | Description                                                                    |
+|-------------------------------|-----------------|----------------------------|--------------------------------------------------------------------------------|
+| `ENV`                         | Yes             | `local`                    | `local` uses OpenAI-compatible local LLM; `production` uses Anthropic          |
+| `DATA_FILE_PATH`              | No              | `data/sales-data.csv`      | Path to the sales data CSV                                                     |
+| `ANTHROPIC_API_KEY`           | Production only | —                          | Anthropic API key for Claude                                                   |
+| `LOCAL_LLM_BASE_URL`          | Local only      | `http://localhost:1234/v1` | LM Studio or vLLM base URL                                                     |
+| `LOCAL_LLM_MODEL`             | Local only      | `local-model`              | Model name for local inference                                                 |
+| `HYPERDX_API_KEY`             | No              | —                          | HyperDX API key (used as `Authorization` header; omit for local self-hosted)   |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | No              | —                          | OTLP endpoint — HyperDX OTLP ingestion port is `4318` (not the UI port `8080`) |
+| `OTEL_SERVICE_NAME`           | No              | `honey-backend`            | Service name in traces                                                         |
+| `LANGFUSE_PUBLIC_KEY`         | No              | —                          | Langfuse project public key                                                    |
+| `LANGFUSE_SECRET_KEY`         | No              | —                          | Langfuse project secret key                                                    |
+| `LANGFUSE_HOST`               | No              | `http://localhost:3000`    | Langfuse host URL                                                              |
 
 ### Frontend
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `BACKEND_URL` | No | `http://localhost:8000` | Backend API base URL |
+| Variable      | Required | Default                 | Description          |
+|---------------|----------|-------------------------|----------------------|
+| `BACKEND_URL` | No       | `http://localhost:8000` | Backend API base URL |
 
 ## Deployment (Fly.io)
 
