@@ -18,4 +18,4 @@ repos:
         additional_dependencies:
           - types-requests
           - pydantic
-        args: [--ignore-missing-imports]
+        args: [--ignore-missing-imports, --explicit-package-bases]

@@ -158,10 +158,11 @@ def test_dashboard_handles_http_error() -> None:
 
 def test_no_red_flags_shows_success_message() -> None:
     """When there are no at-risk SKUs, a success message should be shown."""
+    safe_metrics: dict[str, float] = {"total_m4_revenue": 148250.50, "skus_at_risk": 0}
     safe_response = {
         **MOCK_SUCCESS_RESPONSE,
         "red_flag_data": [],
-        "metrics": {**MOCK_SUCCESS_RESPONSE["metrics"], "skus_at_risk": 0},
+        "metrics": safe_metrics,
     }
     at = AppTest.from_file(APP_PATH)
 

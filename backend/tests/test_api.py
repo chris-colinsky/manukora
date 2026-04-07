@@ -2,7 +2,7 @@
 
 import sys
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -101,7 +101,9 @@ def test_generate_sop_csv_not_found() -> None:
 
 def test_generate_sop_csv_validation_error() -> None:
     """Returns 500 when the CSV fails Pydantic validation."""
-    with patch("api.sop_engine.load_and_validate", side_effect=ValueError("bad column")):
+    with patch(
+        "api.sop_engine.load_and_validate", side_effect=ValueError("bad column")
+    ):
         response = client.get("/api/v1/generate-sop")
     assert response.status_code == 500
     assert "validation" in response.json()["detail"].lower()
@@ -109,7 +111,9 @@ def test_generate_sop_csv_validation_error() -> None:
 
 def test_generate_sop_llm_error(mock_engine_and_llm) -> None:  # type: ignore[no-untyped-def]
     """Returns 500 when the LLM call fails."""
-    with patch("api.llm_service.generate_briefing", side_effect=RuntimeError("timeout")):
+    with patch(
+        "api.llm_service.generate_briefing", side_effect=RuntimeError("timeout")
+    ):
         response = client.get("/api/v1/generate-sop")
     assert response.status_code == 500
 

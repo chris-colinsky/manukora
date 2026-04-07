@@ -72,7 +72,9 @@ def generate_sop() -> SOPResponse:
 
     payload = sop_engine.build_llm_payload(calculated_df)
 
-    logger.info("generating_llm_briefing", skus_at_risk=int(calculated_df["Is_At_Risk"].sum()))
+    logger.info(
+        "generating_llm_briefing", skus_at_risk=int(calculated_df["Is_At_Risk"].sum())
+    )
 
     try:
         briefing = llm_service.generate_briefing(payload)
@@ -148,5 +150,7 @@ def download_pos() -> StreamingResponse:
     return StreamingResponse(
         io.BytesIO(output.getvalue().encode()),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=draft-purchase-orders.csv"},
+        headers={
+            "Content-Disposition": "attachment; filename=draft-purchase-orders.csv"
+        },
     )

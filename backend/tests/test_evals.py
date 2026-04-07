@@ -11,7 +11,6 @@ correctly from the data rather than simply echoing a pre-supplied answer.
 import re
 import sys
 import os
-from typing import Generator
 from unittest.mock import patch
 
 import pytest
@@ -128,13 +127,15 @@ def test_llm_air_freight_matches_ground_truth_mock() -> None:
     payload = sop_engine.build_llm_payload(_REAL_DF)
     correct_briefing = _make_mock_briefing(GROUND_TRUTH_AIR_FREIGHT_SKU)
 
-    with patch.object(llm_service, "_call_llm_with_retry", return_value=(correct_briefing, {})):
+    with patch.object(
+        llm_service, "_call_llm_with_retry", return_value=(correct_briefing, {})
+    ):
         briefing = llm_service.generate_briefing(payload)
 
     extracted = extract_air_freight_sku(briefing)
-    assert extracted == GROUND_TRUTH_AIR_FREIGHT_SKU, (
-        f"LLM recommended '{extracted}' but ground truth is '{GROUND_TRUTH_AIR_FREIGHT_SKU}'"
-    )
+    assert (
+        extracted == GROUND_TRUTH_AIR_FREIGHT_SKU
+    ), f"LLM recommended '{extracted}' but ground truth is '{GROUND_TRUTH_AIR_FREIGHT_SKU}'"
 
 
 @pytest.mark.skipif(
@@ -144,9 +145,9 @@ def test_llm_air_freight_matches_ground_truth_mock() -> None:
 def test_llm_wrong_air_freight_fails_eval() -> None:
     """Simulates a hallucinating LLM — the extracted SKU must not match ground truth."""
     wrong_sku = "Propolis Tincture 30ml"
-    assert wrong_sku != GROUND_TRUTH_AIR_FREIGHT_SKU, (
-        "Choose a different 'wrong' SKU that isn't the actual ground truth"
-    )
+    assert (
+        wrong_sku != GROUND_TRUTH_AIR_FREIGHT_SKU
+    ), "Choose a different 'wrong' SKU that isn't the actual ground truth"
 
     briefing = _make_mock_briefing(wrong_sku)
     extracted = extract_air_freight_sku(briefing)

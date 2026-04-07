@@ -188,7 +188,9 @@ def build_llm_payload(df: pd.DataFrame) -> dict:
     return {
         "all_skus": df[payload_columns].to_dict(orient="records"),
         "skus_at_risk": df[df["Is_At_Risk"]][payload_columns].to_dict(orient="records"),
-        "poor_performers": poor_performers[payload_columns].to_dict(orient="records")
-        if not poor_performers.empty
-        else [],
+        "poor_performers": (
+            poor_performers[payload_columns].to_dict(orient="records")
+            if not poor_performers.empty
+            else []
+        ),
     }

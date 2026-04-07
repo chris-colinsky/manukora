@@ -104,7 +104,9 @@ def test_stock_cover_normal(base_df: pd.DataFrame) -> None:
 def test_effective_cover_includes_on_order(base_df: pd.DataFrame) -> None:
     """Effective_Months_Cover should include Units_On_Order."""
     alpha = base_df[base_df["SKU"] == "Alpha"].iloc[0]
-    expected = (alpha["Stock_On_Hand"] + alpha["Units_On_Order"]) / alpha["Projected_M5_Sales"]
+    expected = (alpha["Stock_On_Hand"] + alpha["Units_On_Order"]) / alpha[
+        "Projected_M5_Sales"
+    ]
     assert alpha["Effective_Months_Cover"] == pytest.approx(expected)
 
 
@@ -144,9 +146,9 @@ def test_suggested_reorder_never_negative(base_df: pd.DataFrame) -> None:
 def test_suggested_reorder_formula(base_df: pd.DataFrame) -> None:
     """Reorder qty = MAX(0, Total_Pipeline_Needed - Stock_On_Hand - Units_On_Order)."""
     alpha = base_df[base_df["SKU"] == "Alpha"].iloc[0]
-    pipeline_needed = (alpha["Target_Months_Cover"] + alpha["Order_Arrival_Months"]) * alpha[
-        "Projected_M5_Sales"
-    ]
+    pipeline_needed = (
+        alpha["Target_Months_Cover"] + alpha["Order_Arrival_Months"]
+    ) * alpha["Projected_M5_Sales"]
     current_pipeline = alpha["Stock_On_Hand"] + alpha["Units_On_Order"]
     expected = max(0, pipeline_needed - current_pipeline)
     assert alpha["Suggested_Reorder_Qty"] == pytest.approx(int(expected))
@@ -174,7 +176,9 @@ def test_growing_sku_not_poor_performer(base_df: pd.DataFrame) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_air_freight_candidate_is_highest_revenue_at_risk(base_df: pd.DataFrame) -> None:
+def test_air_freight_candidate_is_highest_revenue_at_risk(
+    base_df: pd.DataFrame,
+) -> None:
     """Air freight candidate must be the at-risk SKU with the highest Revenue_M4."""
     at_risk = base_df[base_df["Is_At_Risk"]]
     if at_risk.empty:

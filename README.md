@@ -35,13 +35,13 @@ graph LR
 ```bash
 # Backend
 cd backend
-uv sync
+uv sync --all-groups   # --all-groups installs dev dependencies (pytest, pytest-cov)
 ENV=local uv run uvicorn api:app --reload
 # → http://localhost:8000/docs
 
 # Frontend (separate terminal)
 cd frontend
-uv sync
+uv sync --all-groups
 BACKEND_URL=http://localhost:8000 uv run streamlit run app.py
 # → http://localhost:8501
 ```

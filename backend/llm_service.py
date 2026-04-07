@@ -139,7 +139,11 @@ def generate_briefing(payload: dict) -> str:
         trace_obj = langfuse.trace(name="generate-sop-briefing")
         generation = trace_obj.generation(
             name="sop-llm-call",
-            model="claude-sonnet-4-6" if config.ENV == "production" else config.LOCAL_LLM_MODEL,
+            model=(
+                "claude-sonnet-4-6"
+                if config.ENV == "production"
+                else config.LOCAL_LLM_MODEL
+            ),
             input={"system": SYSTEM_PROMPT, "user": user_prompt},
         )
 
