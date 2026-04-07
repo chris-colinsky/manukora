@@ -1,0 +1,29 @@
+app = "honey-backend"
+primary_region = "sjc"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  ENV = "production"
+  DATA_FILE_PATH = "data/sales-data.csv"
+  OTEL_SERVICE_NAME = "honey-backend"
+  LANGFUSE_HOST = "https://cloud.langfuse.com"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    path = "/docs"
+    timeout = "5s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

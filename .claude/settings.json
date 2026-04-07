@@ -1,0 +1,61 @@
+{
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "WebSearch",
+      "WebFetch",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git mv:*)",
+      "Bash(gh repo view --json nameWithOwner --jq '.nameWithOwner')",
+      "Bash(gh api repos/*/*/issues/*/comments*)",
+      "Bash(gh api --method POST repos/*/*/issues/*/comments*)",
+      "Bash(gh pr view*)",
+      "Bash(gh pr comment*)",
+      "Bash(gh pr review --comment*)",
+      "Bash(python3 ~/.claude/skills/pr-review/scripts/*.py*)",
+      "Bash(.venv/bin/python ~/.claude/skills/hyperdx/scripts/hdx_query.py*)",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(echo:*)",
+      "Bash(tree:*)",
+      "Bash(wc:*)",
+      "Bash(comm:*)",
+      "Bash(brew list:*)",
+      "Bash(uv sync:*)",
+      "Bash(uv add:*)",
+      "Bash(uv pip show:*)",
+      "Bash(uv pip list:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(make:*)",
+      "Bash(source:*)",
+      "Read(./.env.example)",
+      "mcp__ide__getDiagnostics"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)",
+      "Bash(ssh:*)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(**/secrets/**)",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ],
+    "ask": [
+      "Bash(git stash:*)",
+      "Bash(curl:*)",
+      "Bash(wget:*)"
+    ]
+  }
+}

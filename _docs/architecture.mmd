@@ -1,0 +1,19 @@
+architecture-beta
+  group backend(cloud)[Backend Service]
+  group frontend(cloud)[Frontend Service]
+  group observability(cloud)[Observability]
+
+  service csv(database)[sales-data.csv] in backend
+  service engine(server)[sop_engine.py Pandas] in backend
+  service api(server)[FastAPI api.py] in backend
+  service llm(internet)[Anthropic Claude] in backend
+  service langfuse(server)[Langfuse] in observability
+  service hyperdx(internet)[HyperDX OTLP] in observability
+  service ui(server)[Streamlit app.py] in frontend
+
+  csv:R --> L:engine
+  engine:R --> L:api
+  api:R --> L:llm
+  llm:B --> T:langfuse
+  api:B --> T:hyperdx
+  ui:R --> L:api

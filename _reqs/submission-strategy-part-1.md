@@ -268,3 +268,23 @@ The generated repository must adhere to the following documentation standards:
 - **Inline Code Documentation**:  
   - Enforce Google-style Docstrings for all classes and functions.  
   - All functions must utilize explicit Python type hints (validated by mypy in the pre-commit hook).
+
+## Clarifying Questions
+
+**Q: The deepeval test must "extract the LLM's recommended Air Freight SKU from its generated Markdown." Should the LLM prompt be written to produce a clearly delimited section (e.g., a specific header or bold label) to make regex extraction reliable, or is free-form parsing acceptable?**
+A: clearly delimited section
+
+**Q: Is actual cloud deployment to Fly.io required for the submission, or is a working local `docker-compose up` sufficient for the hiring manager to evaluate the project?**
+A: Should be deployable to Fly.io for the hiring manager to evaluate the project.
+
+**Q: For Langfuse and HyperDX observability: should these be configured against real cloud accounts (requiring API keys), or is a locally self-hosted Langfuse (via Docker) plus a stubbed/no-op OTLP exporter acceptable for local dev and the submission demo?**
+A: locally self-hosted with a strecth goal to connect to real cloud accounts.
+
+**Q: The reqs specify "Claude 3.5 Sonnet" for production. Should the model ID be pinned to `claude-3-5-sonnet-20241022`, or is using the latest available Sonnet model (currently `claude-sonnet-4-6`) preferred?**
+A: latest available
+
+**Q: For the `GET /api/v1/download-pos` endpoint, should it return all SKUs where `Suggested_Reorder_Qty > 0`, or only the subset explicitly discussed/recommended in the LLM briefing?**
+A: return all SKUs where `Suggested_Reorder_Qty > 0`
+
+**Q: What should the default `BACKEND_URL` be in the frontend for local development outside of Docker (i.e., when running `uv run streamlit run app.py` directly)? `http://localhost:8000`?**
+A: http://localhost:8000 works for the backend

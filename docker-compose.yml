@@ -1,0 +1,29 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      ENV: ${ENV:-local}
+      DATA_FILE_PATH: data/sales-data.csv
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LOCAL_LLM_BASE_URL: ${LOCAL_LLM_BASE_URL:-http://host.docker.internal:1234/v1}
+      LOCAL_LLM_MODEL: ${LOCAL_LLM_MODEL:-local-model}
+      # HyperDX — OTLP ingestion on :4318 (UI is :8080); backend connects via host gateway
+      HYPERDX_API_KEY: ${HYPERDX_API_KEY:-}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://host.docker.internal:4318}
+      # Langfuse — already running locally on :3000; backend connects via host gateway
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-publickey-local}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-secretkey-local}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-http://host.docker.internal:3000}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8501:8501"
+    environment:
+      BACKEND_URL: http://backend:8000
+    depends_on:
+      - backend
