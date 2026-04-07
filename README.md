@@ -1,8 +1,8 @@
 # Manukora S&OP Intelligence
 
-[![CI](https://github.com/mbt-commander/honey/actions/workflows/ci.yml/badge.svg)](https://github.com/mbt-commander/honey/actions/workflows/ci.yml)
-[![Backend Coverage](https://img.shields.io/badge/backend%20coverage-90%25-brightgreen)](https://github.com/mbt-commander/honey)
-[![Frontend Coverage](https://img.shields.io/badge/frontend%20coverage-95%25-brightgreen)](https://github.com/mbt-commander/honey)
+[![CI](https://github.com/chris-colinsky/manukora/actions/workflows/ci.yml/badge.svg)](https://github.com/chris-colinsky/manukora/actions/workflows/ci.yml)
+[![Backend Coverage](https://img.shields.io/badge/backend%20coverage-90%25-brightgreen)](https://github.com/chris-colinsky/manukora)
+[![Frontend Coverage](https://img.shields.io/badge/frontend%20coverage-95%25-brightgreen)](https://github.com/chris-colinsky/manukora)
 [![Python](https://img.shields.io/badge/python-3.12-blue)](https://python.org)
 
 An AI-powered weekly S&OP briefing system for a DTC honey brand. A FastAPI backend runs all supply chain maths deterministically in Pandas, then passes verified data to Claude for executive narrative. A Streamlit frontend autoloads the briefing — no clicks required.
