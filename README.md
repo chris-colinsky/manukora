@@ -92,7 +92,14 @@ cd backend && uv run pytest tests/test_sop_engine.py::test_bioactive_blend_proje
 
 ## Environment Variables
 
-### Backend
+Each service reads its own `.env` file from its own directory (`backend/.env` and `frontend/.env`). Neither file is committed — copy the root `.env.example` to get started:
+
+```bash
+cp .env.example backend/.env
+cp .env.example frontend/.env
+```
+
+### Backend (`backend/.env`)
 
 | Variable                      | Required        | Default                    | Description                                                                    |
 |-------------------------------|-----------------|----------------------------|--------------------------------------------------------------------------------|
@@ -108,7 +115,7 @@ cd backend && uv run pytest tests/test_sop_engine.py::test_bioactive_blend_proje
 | `LANGFUSE_SECRET_KEY`         | No              | —                          | Langfuse project secret key                                                    |
 | `LANGFUSE_HOST`               | No              | `http://localhost:3000`    | Langfuse host URL                                                              |
 
-### Frontend
+### Frontend (`frontend/.env`)
 
 | Variable      | Required | Default                 | Description          |
 |---------------|----------|-------------------------|----------------------|
@@ -135,21 +142,28 @@ fly deploy
 
 ```
 honey/
-├── backend/
+├── .env.example                # Template — copy to backend/.env and frontend/.env
+├── backend/                    # FastAPI microservice
+│   ├── .env                    # ← NOT committed; copy from root .env.example
 │   ├── data/sales-data.csv     # Bundled mock data (12 SKUs)
 │   ├── tests/
 │   │   ├── test_sop_engine.py  # 23 unit tests for all supply chain formulas
 │   │   ├── test_api.py         # FastAPI endpoint integration tests
 │   │   └── test_evals.py       # deepeval LLM reasoning validation
 │   ├── api.py                  # FastAPI routes
-│   ├── config.py               # Starlette Config (env vars)
+│   ├── config.py               # Starlette Config — reads backend/.env
 │   ├── schemas.py              # Pydantic models
 │   ├── sop_engine.py           # Pandas calculation engine
 │   ├── llm_service.py          # LLM factory + Tenacity + Langfuse
-│   └── telemetry.py            # Structlog + OpenTelemetry setup
-├── frontend/
+│   ├── telemetry.py            # Structlog + OpenTelemetry setup
+│   ├── pyproject.toml          # Backend dependencies (uv)
+│   └── Dockerfile
+├── frontend/                   # Streamlit microservice
+│   ├── .env                    # ← NOT committed; copy from root .env.example
 │   ├── tests/test_app.py       # Streamlit AppTest suite
-│   └── app.py                  # Streamlit dashboard
+│   ├── app.py                  # Streamlit dashboard
+│   ├── pyproject.toml          # Frontend dependencies (uv)
+│   └── Dockerfile
 ├── _docs/
 │   ├── adr/0001-calculate-first-reason-second.md
 │   └── architecture.mmd

@@ -46,7 +46,7 @@
       "Bash(sudo:*)",
       "Bash(ssh:*)",
       "Read(./.env)",
-      "Read(./.env.*)",
+      "Read(./.env.local)",
       "Read(**/secrets/**)",
       "Bash(git push:*)",
       "Bash(git add:*)",

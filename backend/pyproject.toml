@@ -23,6 +23,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pandas-stubs>=3.0.0.260204",
     "pytest>=9.0.2",
     "pytest-cov>=7.1.0",
 ]

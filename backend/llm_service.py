@@ -52,6 +52,7 @@ def _call_anthropic(user_prompt: str) -> tuple[str, dict[str, Any]]:
         A tuple of (response_text, usage_dict).
     """
     import anthropic  # noqa: PLC0415
+    from anthropic.types import TextBlock  # noqa: PLC0415
 
     client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
     response = client.messages.create(
@@ -60,7 +61,8 @@ def _call_anthropic(user_prompt: str) -> tuple[str, dict[str, Any]]:
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_prompt}],
     )
-    text = response.content[0].text
+    block = response.content[0]
+    text = block.text if isinstance(block, TextBlock) else ""
     usage = {
         "input_tokens": response.usage.input_tokens,
         "output_tokens": response.usage.output_tokens,
@@ -136,9 +138,9 @@ def generate_briefing(payload: dict) -> str:
 
     generation = None
     if langfuse:
-        trace_obj = langfuse.trace(name="generate-sop-briefing")
-        generation = trace_obj.generation(
+        generation = langfuse.start_observation(
             name="sop-llm-call",
+            as_type="generation",
             model=(
                 "claude-sonnet-4-6"
                 if config.ENV == "production"
@@ -163,13 +165,14 @@ def generate_briefing(payload: dict) -> str:
     )
 
     if generation and langfuse:
-        generation.end(
+        generation.update(
             output=text,
-            usage={
+            usage_details={
                 "input": usage.get("input_tokens", 0),
                 "output": usage.get("output_tokens", 0),
             },
         )
+        generation.end()
         langfuse.flush()
 
     return text

@@ -9,7 +9,8 @@ build/
 .eggs/
 
 # Environment
-.env
+backend/.env
+frontend/.env
 
 # Testing
 .pytest_cache/

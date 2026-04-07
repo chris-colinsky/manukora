@@ -36,7 +36,7 @@ def load_and_validate(file_path: str) -> pd.DataFrame:
     errors: list[str] = []
     for idx, row in df.iterrows():
         try:
-            SalesRow(**row.to_dict())
+            SalesRow(**{str(k): v for k, v in row.to_dict().items()})
         except Exception as exc:
             errors.append(f"Row {idx} ({row.get('SKU', '?')}): {exc}")
     if errors:
