@@ -10,22 +10,35 @@ An AI-powered weekly S&OP briefing system for a DTC honey brand. A FastAPI backe
 ## Architecture
 
 ```mermaid
-graph LR
-    CSV["sales-data.csv"]
-    ENGINE["sop_engine.py\nPandas calculations"]
-    API["FastAPI\napi.py"]
-    LLM["Anthropic Claude\nclaude-sonnet-4-6"]
-    UI["Streamlit\napp.py"]
-    LANGFUSE["Langfuse\nLLM observability"]
-    HYPERDX["HyperDX\nOTLP traces & logs"]
+flowchart LR
+    subgraph backend[Backend Service]
+        CSV[(sales-data.csv)]
+        ENGINE[sop_engine.py\nPandas]
+        API[FastAPI\napi.py]
+    end
+
+    subgraph llm[LLM Backend]
+        LLM[Anthropic Claude\nclaude-sonnet-4-6\nENV=production]
+        LOCAL[Local LLM\nLM Studio / vLLM\nENV=local]
+    end
+
+    subgraph frontend[Frontend Service]
+        UI[Streamlit\napp.py]
+    end
+
+    subgraph observability[Observability]
+        LANGFUSE[Langfuse]
+        HYPERDX[HyperDX OTLP]
+    end
 
     CSV --> ENGINE
     ENGINE --> API
     API --> LLM
-    LLM --> LANGFUSE
+    API --> LOCAL
+    API --> LANGFUSE
     API --> HYPERDX
-    UI -->|"GET /api/v1/generate-sop"| API
-    UI -->|"GET /api/v1/download-pos"| API
+    UI -->|GET /api/v1/generate-sop| API
+    UI -->|GET /api/v1/download-pos| API
 ```
 
 **Key architectural decision (ADR 0001):** All arithmetic is performed in Python/Pandas before the LLM is called. The LLM never sees raw CSV data — only a pre-computed JSON payload. This eliminates arithmetic hallucination risk. See [`_docs/adr/0001-calculate-first-reason-second.md`](_docs/adr/0001-calculate-first-reason-second.md).

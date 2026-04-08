@@ -1,19 +1,29 @@
-architecture-beta
-  group backend(cloud)[Backend Service]
-  group frontend(cloud)[Frontend Service]
-  group observability(cloud)[Observability]
+flowchart LR
+    subgraph backend[Backend Service]
+        CSV[(sales-data.csv)]
+        ENGINE[sop_engine.py\nPandas]
+        API[FastAPI\napi.py]
+    end
 
-  service csv(database)[sales-data.csv] in backend
-  service engine(server)[sop_engine.py Pandas] in backend
-  service api(server)[FastAPI api.py] in backend
-  service llm(internet)[Anthropic Claude] in backend
-  service langfuse(server)[Langfuse] in observability
-  service hyperdx(internet)[HyperDX OTLP] in observability
-  service ui(server)[Streamlit app.py] in frontend
+    subgraph external[LLM Backend]
+        LLM[Anthropic Claude\nclaude-sonnet-4-6\nENV=production]
+        LOCAL[Local LLM\nLM Studio / vLLM\nENV=local]
+    end
 
-  csv:R --> L:engine
-  engine:R --> L:api
-  api:R --> L:llm
-  llm:B --> T:langfuse
-  api:B --> T:hyperdx
-  ui:R --> L:api
+    subgraph frontend[Frontend Service]
+        UI[Streamlit\napp.py]
+    end
+
+    subgraph observability[Observability]
+        LANGFUSE[Langfuse]
+        HYPERDX[HyperDX OTLP]
+    end
+
+    CSV --> ENGINE
+    ENGINE --> API
+    API --> LLM
+    API --> LOCAL
+    API --> LANGFUSE
+    API --> HYPERDX
+    UI -->|GET /api/v1/generate-sop| API
+    UI -->|GET /api/v1/download-pos| API
