@@ -78,10 +78,21 @@ def _call_local(system_prompt: str, user_prompt: str) -> tuple[str, dict[str, An
     return text, usage
 
 
+def _log_retry(retry_state: Any) -> None:
+    """Log each Tenacity retry attempt with context."""
+    logger.warning(
+        "llm_retry_attempt",
+        attempt=retry_state.attempt_number,
+        wait_seconds=round(retry_state.idle_for, 1) if retry_state.idle_for else 0,
+        error=str(retry_state.outcome.exception()) if retry_state.outcome else None,
+    )
+
+
 @retry(
     wait=wait_exponential(multiplier=1, min=2, max=30),
     stop=stop_after_attempt(3),
     reraise=True,
+    before_sleep=_log_retry,
 )
 def _call_llm_with_retry(
     system_prompt: str, user_prompt: str
@@ -153,6 +164,14 @@ def generate_briefing(payload: dict) -> str:
             gen_kwargs["prompt"] = system_result.langfuse_prompt
         generation = langfuse.start_observation(**gen_kwargs)
 
+    logger.info(
+        "llm_call_started",
+        model=model_name,
+        env=config.ENV,
+        system_prompt_length=len(system_result.text),
+        user_prompt_length=len(user_result.text),
+    )
+
     start_time = time.monotonic()
 
     with tracer.start_as_current_span("llm.generate_briefing"):
@@ -162,9 +181,11 @@ def generate_briefing(payload: dict) -> str:
 
     logger.info(
         "llm_call_complete",
+        model=model_name,
         env=config.ENV,
         input_tokens=usage.get("input_tokens"),
         output_tokens=usage.get("output_tokens"),
+        response_length=len(text),
         latency_seconds=round(elapsed, 2),
     )
 

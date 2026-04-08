@@ -2,6 +2,7 @@
 
 import csv
 import io
+import time
 from contextlib import asynccontextmanager
 
 import structlog
@@ -26,13 +27,22 @@ async def lifespan(_app: FastAPI):
     telemetry.setup()
 
     log = structlog.get_logger(__name__)
-    log.info("starting application", env=config.ENV)
+    log.info(
+        "application_started",
+        env=config.ENV,
+        data_file=config.DATA_FILE_PATH,
+        otel_endpoint=config.OTEL_EXPORTER_OTLP_ENDPOINT or "disabled",
+        langfuse_configured=bool(
+            config.LANGFUSE_PUBLIC_KEY and config.LANGFUSE_SECRET_KEY
+        ),
+    )
 
     yield
 
     # --- Shutdown ---
     log = structlog.get_logger(__name__)
-    log.info("shutting down application")
+    telemetry.shutdown()
+    log.info("application_shutdown")
 
 
 def create_app() -> FastAPI:
@@ -42,7 +52,7 @@ def create_app() -> FastAPI:
         A configured FastAPI instance.
     """
     application = FastAPI(
-        title="Honey S&OP API",
+        title="Manukora S&OP API",
         description=(
             "AI-powered Sales & Operations Planning briefing for Manukora. "
             "Calculates supply chain metrics with Pandas and generates "
@@ -82,19 +92,26 @@ def _build_router():
             SOPResponse containing KPI metrics, at-risk SKU data, and the LLM briefing.
         """
         logger = structlog.get_logger(__name__)
+        start_time = time.monotonic()
+        logger.info("sop_generation_started")
+
         calculated_df = _load_calculated_df()
 
         payload = sop_engine.build_llm_payload(calculated_df)
 
+        skus_at_risk = int(calculated_df["Is_At_Risk"].sum())
         logger.info(
             "generating_llm_briefing",
-            skus_at_risk=int(calculated_df["Is_At_Risk"].sum()),
+            skus_at_risk=skus_at_risk,
+            payload_skus=len(payload.get("all_skus", [])),
+            at_risk_skus=len(payload.get("skus_at_risk", [])),
+            poor_performers=len(payload.get("poor_performers", [])),
         )
 
         try:
             briefing = llm_service.generate_briefing(payload)
         except Exception as exc:
-            logger.error("llm_call_failed", error=str(exc))
+            logger.error("llm_call_failed", error=str(exc), exc_info=True)
             raise HTTPException(
                 status_code=500,
                 detail=f"LLM generation failed: {exc}",
@@ -114,7 +131,16 @@ def _build_router():
 
         metrics = SOPMetrics(
             total_m4_revenue=round(float(calculated_df["Revenue_M4"].sum()), 2),
-            skus_at_risk=int(calculated_df["Is_At_Risk"].sum()),
+            skus_at_risk=skus_at_risk,
+        )
+
+        elapsed = time.monotonic() - start_time
+        logger.info(
+            "sop_generation_completed",
+            total_m4_revenue=metrics.total_m4_revenue,
+            skus_at_risk=metrics.skus_at_risk,
+            briefing_length=len(briefing),
+            latency_seconds=round(elapsed, 2),
         )
 
         return SOPResponse(
@@ -139,6 +165,8 @@ def _build_router():
             StreamingResponse with CSV content and attachment Content-Disposition header.
         """
         logger = structlog.get_logger(__name__)
+        logger.info("po_download_started")
+
         calculated_df = _load_calculated_df()
 
         reorder_df = calculated_df[calculated_df["Suggested_Reorder_Qty"] > 0][
@@ -159,7 +187,7 @@ def _build_router():
             writer.writerow(row.to_dict())
 
         output.seek(0)
-        logger.info("po_download", rows=len(reorder_df))
+        logger.info("po_download_completed", rows=len(reorder_df))
 
         return StreamingResponse(
             io.BytesIO(output.getvalue().encode()),
@@ -183,8 +211,20 @@ def _load_calculated_df():
     """
     logger = structlog.get_logger(__name__)
     try:
+        logger.info("csv_loading", path=config.DATA_FILE_PATH)
         df = sop_engine.load_and_validate(config.DATA_FILE_PATH)
-        return sop_engine.calculate(df)
+        logger.info("csv_loaded", rows=len(df), columns=len(df.columns))
+
+        calculated = sop_engine.calculate(df)
+        at_risk = int(calculated["Is_At_Risk"].sum())
+        total_reorder = int(calculated["Suggested_Reorder_Qty"].sum())
+        logger.info(
+            "calculations_completed",
+            skus=len(calculated),
+            at_risk=at_risk,
+            total_reorder_units=total_reorder,
+        )
+        return calculated
     except FileNotFoundError:
         logger.error("csv_not_found", path=config.DATA_FILE_PATH)
         raise HTTPException(
@@ -192,7 +232,7 @@ def _load_calculated_df():
             detail=f"Sales data file not found at '{config.DATA_FILE_PATH}'.",
         )
     except ValueError as exc:
-        logger.error("csv_validation_failed", error=str(exc))
+        logger.error("csv_validation_failed", error=str(exc), exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"CSV validation error: {exc}",
