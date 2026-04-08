@@ -37,6 +37,10 @@ AT_RISK_SKUS: set[str] = {str(s) for s in _REAL_DF[_REAL_DF["Is_At_Risk"]]["SKU"
 # Ground truth: all SKU names in the dataset (for section parsing).
 ALL_SKUS: set[str] = {str(s) for s in _REAL_DF["SKU"]}
 
+# Ground truth: valid poor performer SKUs (negative MoM + high cover).
+_poor_performers_df = sop_engine.get_poor_performers(_REAL_DF)
+POOR_PERFORMER_SKUS: set[str] = {str(s) for s in _poor_performers_df["SKU"]}
+
 # Ground truth: Bioactive Blend SKUs (must never be flagged as dead stock).
 BIOACTIVE_SKUS: set[str] = {
     str(s)
@@ -321,6 +325,35 @@ def test_live_llm_bioactive_not_dead_stock(live_briefing: str) -> None:
     assert not mentioned_bioactive, (
         f"Dead stock / poor performer section mentions Bioactive Blend SKUs: "
         f"{mentioned_bioactive}. These are new Q1 2026 launches and must be excluded.\n\n"
+        f"--- SECTION TEXT ---\n\n{section_text}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Content eval: Dead stock SKU must be a valid poor performer
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.integration
+def test_live_llm_dead_stock_is_valid_poor_performer(live_briefing: str) -> None:
+    """The SKU identified as dead stock must appear in the Pandas poor_performers list."""
+    assert (
+        POOR_PERFORMER_SKUS
+    ), "No poor performers found in the data — cannot validate dead stock pick."
+
+    section_match = _POOR_PERFORMER_SECTION.search(live_briefing)
+    # Check whether any valid poor performer SKU is mentioned in the section.
+    if section_match:
+        section_text = section_match.group(1)
+    else:
+        # Fall back to full briefing if no distinct section heading found.
+        section_text = live_briefing
+
+    found_valid = [sku for sku in POOR_PERFORMER_SKUS if sku in section_text]
+    assert found_valid, (
+        f"The dead stock / poor performer discussion does not mention any valid "
+        f"poor performer SKU. Valid poor performers (negative MoM + high cover): "
+        f"{POOR_PERFORMER_SKUS}\n\n"
         f"--- SECTION TEXT ---\n\n{section_text}"
     )
 
