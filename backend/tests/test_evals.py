@@ -1,7 +1,9 @@
-"""LLM evaluation test using deepeval.
+"""LLM evaluation tests using deepeval with Claude Opus as judge.
 
-Validates that the LLM's air freight recommendation matches the deterministic
-Pandas-calculated ground truth (Air_Freight_Candidate).
+Validates that the LLM's S&OP briefing:
+1. Correctly identifies the air freight candidate (deterministic ground truth)
+2. Contains all required sections (completeness)
+3. Stays faithful to the pre-calculated data payload (no hallucinated numbers)
 
 Architecture note (ADR 0001): Air_Freight_Candidate is intentionally withheld
 from the JSON payload sent to the LLM. This test proves the model reasons
@@ -205,3 +207,8 @@ def test_live_llm_air_freight_matches_ground_truth() -> None:
         f"{ACCEPTABLE_AIR_FREIGHT_SKUS}"
         f"\n\n--- FULL BRIEFING ---\n\n{briefing}"
     )
+
+
+# ---------------------------------------------------------------------------
+# deepeval evaluation: run via `make test-eval` (see tests/run_evals.py)
+# ---------------------------------------------------------------------------

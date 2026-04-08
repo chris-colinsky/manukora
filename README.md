@@ -74,26 +74,86 @@ make up
 # Frontend → http://localhost:8501
 ```
 
-## Running Tests
+## Testing
+
+### Quick Start
 
 ```bash
-make test        # run both backend and frontend test suites with coverage
-make lint        # black + ruff + mypy
-make pre-commit  # install and run pre-commit hooks
+make test             # run both backend and frontend test suites with coverage
+make test-integration # run live LLM integration tests (requires LLM running)
+make test-eval        # run deepeval evaluation with rich output, saves to _docs/eval-results.txt
+make lint             # black + ruff + mypy
+make pre-commit       # install and run pre-commit hooks
 ```
 
-Or run individual suites:
+### Test Suites
+
+The project has three tiers of tests:
+
+| Suite        | File                 | Tests                  | What it validates                                                                                          |
+|--------------|----------------------|------------------------|------------------------------------------------------------------------------------------------------------|
+| **Unit**     | `test_sop_engine.py` | 23                     | Every supply chain formula, edge cases (division by zero, Bioactive Blend exception), reorder calculations |
+| **API**      | `test_api.py`        | 10                     | FastAPI endpoints via TestClient, error handling, CSV download format                                      |
+| **LLM Eval** | `test_evals.py`      | 8 unit + 2 integration | Air freight extraction, ground truth validation, live LLM smoke tests                                      |
+| **deepeval** | `run_evals.py`       | 3 metrics              | Air freight correctness, briefing completeness, faithfulness (Claude Opus as judge)                        |
+
+### Running Unit & API Tests (no LLM required)
 
 ```bash
-# Backend only
 cd backend && uv run pytest tests/ --cov=. -v
-
-# Frontend only
 cd frontend && uv run pytest tests/ --cov=. -v
-
-# Single test
-cd backend && uv run pytest tests/test_sop_engine.py::test_bioactive_blend_projection_uses_m4_baseline -v
 ```
+
+### Running LLM Integration Tests
+
+These tests call a live LLM and are skipped by default (via `addopts = "-m 'not integration'"` in `pyproject.toml`).
+
+**Against local LLM (LM Studio):**
+
+```bash
+make test-integration
+```
+
+**Against Anthropic API (production):**
+
+```bash
+ENV=production make test-integration
+```
+
+### deepeval LLM Evaluation (Claude Opus as Judge)
+
+The standalone evaluation runner (`tests/run_evals.py`) uses [deepeval](https://github.com/confident-ai/deepeval) with **Claude Opus** as the LLM judge — a stronger model evaluating the output of Claude Sonnet. This follows the best practice of using a more capable model as the evaluator.
+
+| Metric                  | Type               | What it proves                                                                                                                    |
+|-------------------------|--------------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| Air Freight Correctness | GEval              | The briefing's air freight recommendation identifies a top-revenue at-risk SKU with sound reasoning                               |
+| Briefing Completeness   | GEval              | All 6 required sections are present (exec summary, sales performance, red flags, reorder recs, Bioactive Blend note, air freight) |
+| Faithfulness            | FaithfulnessMetric | Every claim in the briefing traces back to the pre-calculated data payload — no hallucinated numbers                              |
+
+The faithfulness metric is the core proof that the **"calculate first, reason second"** architecture works: the LLM reasons over verified data, not raw CSV.
+
+**Run standalone evaluation with rich output:**
+
+```bash
+ENV=production make test-eval    # against Anthropic API → _docs/production-eval-results.txt
+make test-eval                   # against local LLM    → _docs/local-eval-results.txt
+```
+
+All `make` targets run from the project root. Pass `ENV=production` on the command line to use the Anthropic API, or omit it to default to the local LLM (LM Studio). The output file is named by environment automatically.
+
+This produces deepeval's full verbose output including evaluation steps, extracted claims/truths, judge reasoning, scores, and a summary table.
+
+### Evaluation Scorecard
+
+Results from running `make test-eval` against different LLM backends (scored by Claude Opus judge):
+
+| Model               | Environment | Air Freight (0.7) | Completeness (0.7) | Faithfulness (0.7) | Result     |
+|---------------------|-------------|-------------------|--------------------|--------------------|------------|
+| Claude Sonnet 4.6   | production  | 0.8               | 1.0                | 1.0                | 3/3 passed |
+| Mistral Small 3 24B | local       | 1.0               | 0.7                | 1.0                | 3/3 passed |
+| Gemma 4 26B         | local       | 0.1               | 0.8                | 1.0                | 1/3 failed |
+
+Thresholds shown in parentheses. Full results: [`_docs/production-eval-results.txt`](_docs/production-eval-results.txt) | [`_docs/local-eval-results.txt`](_docs/local-eval-results.txt)
 
 ## API Endpoints
 

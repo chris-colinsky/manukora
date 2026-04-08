@@ -26,6 +26,9 @@ markers = [
     "integration: live LLM tests (require running local LLM, deselected by default)",
 ]
 addopts = "-m 'not integration'"
+filterwarnings = [
+    "ignore::DeprecationWarning:deepeval",
+]
 
 [dependency-groups]
 dev = [

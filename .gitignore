@@ -17,6 +17,7 @@ frontend/.env
 .coverage
 htmlcov/
 coverage.xml
+.deepeval/
 
 # Type checking
 .mypy_cache/

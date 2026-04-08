@@ -1,0 +1,827 @@
+Loading sales data and computing ground truth...
+Ground truth air freight SKU: Manuka Honey MGO 514+ 500g
+Acceptable SKUs: {'Manuka Honey MGO 850+ 500g', 'Manuka Honey MGO 514+ 500g'}
+
+Generating S&OP briefing via LLM...
+2026-04-07 21:47:44 [info     ] llm_call_complete              env=production input_tokens=4722 latency_seconds=71.17 output_tokens=3278
+Briefing length: 11353 chars
+
+======================================================================
+RUNNING DEEPEVAL EVALUATION (Claude Opus as Judge)
+======================================================================
+
+✨ You're running DeepEval's latest Air Freight Correctness [GEval] Metric! (using claude-opus-4-6 (Anthropic), strict=False, async_mode=True)...
+✨ You're running DeepEval's latest Briefing Completeness [GEval] Metric! (using claude-opus-4-6 (Anthropic), strict=False, async_mode=True)...
+✨ You're running DeepEval's latest Faithfulness Metric! (using claude-opus-4-6 (Anthropic), strict=False, async_mode=True)...
+**************************************************
+Air Freight Correctness [GEval] Verbose Logs
+**************************************************
+
+Criteria:
+The briefing must recommend a specific SKU for air freight. The recommended SKU should be among the highest-revenue at-risk SKUs in the data. Evaluate whether the recommendation is logically justified using revenue contribution and stock risk from the input data. 
+ 
+Evaluation Steps:
+[
+    "Verify that the Actual Output explicitly recommends a specific SKU for air freight, and compare it against the Expected Output's recommended SKU to assess alignment.",
+    "Check whether the recommended SKU in the Actual Output is among the highest-revenue at-risk SKUs present in the input data, consistent with what the Expected Output identifies as top candidates.",
+    "Evaluate whether the Actual Output provides a logical justification for its recommendation using revenue contribution and stock risk data, and compare the strength and accuracy of this justification against the Expected Output's reasoning.",
+    "Assess whether the Actual Output's recommendation would be actionable and defensible in a real briefing context, considering how closely its data-driven rationale matches the Expected Output's analysis of revenue and inventory risk."
+] 
+ 
+Rubric:
+None 
+ 
+Score: 0.8
+ 
+Reason: The Actual Output recommends air freighting 'Manuka Honey MGO 850+ 500g', which is explicitly listed as an acceptable alternative in the Expected Output. While the Expected Output identifies 'Manuka Honey MGO 514+ 500g' as the primary candidate due to its higher M4 revenue (£31,356 vs £26,838), the Actual Output provides a thorough, well-reasoned justification for choosing the 850+ 500g instead — citing its lower current cover (1.64 vs 1.82 months), zero pipeline, steeper growth rate (~10% MoM), and imminent stockout risk under standard sea freight lead times. The response explicitly acknowledges that the 514+ 500g has higher revenue but argues the 850+ 500g faces more acute timing risk. This is a defensible, data-driven rationale that would hold up in a real executive briefing. The recommendation is actionable, with specific unit quantities, timeline estimates, and a clear call to action. The only gap versus the Expected Output is that the primary candidate differs, but since the chosen SKU is among the accepted alternatives and the justification is strong, this is a minor deviation.
+
+======================================================================
+**************************************************
+Briefing Completeness [GEval] Verbose Logs
+**************************************************
+
+Criteria:
+The S&OP briefing must contain ALL of the following sections: 1) An Executive Summary of the past month's performance. 2) A section highlighting what sold well vs. what sold poorly, including discussion of dead stock and discount/bundling strategy. 3) A 'Red Flags' section for SKUs below target cover, with a reminder about seasonality limitations. 4) Reorder recommendations for at least 3 SKUs with business reasoning referencing lead times, pipeline, and target cover. 5) A note about Bioactive Blend products being new Q1 2026 launches with conservative demand modelling. 6) A strategic air freight recommendation with a clearly delimited **AIR FREIGHT SKU: <name>** line. 
+ 
+Evaluation Steps:
+[
+    "Verify that the Actual Output contains all six required sections: Executive Summary, sold well vs. sold poorly analysis (including dead stock and discount/bundling strategy), Red Flags section (with seasonality limitations reminder), Reorder recommendations (for at least 3 SKUs with reasoning referencing lead times, pipeline, and target cover), a note about Bioactive Blend products being new Q1 2026 launches with conservative demand modelling, and a strategic air freight recommendation with a clearly delimited **AIR FREIGHT SKU: <name>** line.",
+    "Assess the completeness and specificity of each section: the Executive Summary should summarize past month's performance; the sales analysis must explicitly discuss both strong and weak performers plus dead stock and discount/bundling strategies; the Red Flags section must identify specific SKUs below target cover and include a seasonality caveat; reorder recommendations must cover at least 3 SKUs with business reasoning that references lead times, pipeline stock, and target cover.",
+    "Check that the Bioactive Blend note clearly identifies these products as new Q1 2026 launches and explicitly mentions conservative demand modelling, and that the air freight recommendation includes the exact formatting **AIR FREIGHT SKU: <name>** on a distinct, clearly delimited line.",
+    "Compare Actual Outputs against each other by counting how many of the six required sections are fully present and correctly detailed; rank higher any output that includes all sections with substantive, specific content over outputs that omit sections, provide only superficial coverage, or fail to meet formatting requirements such as the air freight line delimiter."
+] 
+ 
+Rubric:
+None 
+ 
+Score: 1.0
+ 
+Reason: The response contains all six required sections with exceptional detail and specificity. (1) Executive Summary: Summarizes past month performance with total revenue, top SKUs, and growth rates. (2) Sold well vs. sold poorly analysis: Explicitly covers strong performers with data tables, addresses dead stock (noting none truly exists but identifying the weakest contributor), and provides a thoughtful discount/bundling strategy recommendation for Propolis. (3) Red Flags: Identifies 5 specific SKUs below target cover with a detailed table, and includes a thorough seasonality limitations reminder covering winter wellness, gifting peaks, and New Year resolutions — explicitly noting the model uses trailing 4-month momentum only. (4) Reorder recommendations: Covers 3+ SKUs (MGO 850+ 500g, MGO 514+ 500g, Propolis Tincture 30ml, plus additional notes on MGO 1700+ 100g) with detailed business reasoning referencing lead times, pipeline stock (zero on order), and target cover. (5) Bioactive Blend note: Clearly identifies these as new Q1 2026 launches and explicitly explains conservative demand modelling with rationale about launch halo effects. (6) Air freight recommendation: Provides thorough strategic reasoning with revenue analysis and includes the exactly formatted **AIR FREIGHT SKU: Manuka Honey MGO 850+ 500g** on a clearly delimited line. The formatting, depth, and specificity across all sections are exemplary.
+
+======================================================================
+**************************************************
+Faithfulness Verbose Logs
+**************************************************
+
+Truths (limit=None):
+[
+    "There are 12 SKUs tracked in total across the inventory.",
+    "5 out of 12 SKUs are flagged as at risk.",
+    "There are no poor performers identified among the SKUs.",
+    "Manuka Honey MGO 514+ 500g is at risk with 780 units of stock on hand and no units on order.",
+    "Manuka Honey MGO 850+ 500g is at risk with 440 units of stock on hand and no units on order.",
+    "Propolis Tincture 30ml is at risk with 230 units of stock on hand and no units on order.",
+    "Bioactive Blend Energy 250g is at risk with 740 units of stock on hand and no units on order.",
+    "Bioactive Blend Recovery 250g is at risk with 610 units of stock on hand and no units on order.",
+    "All five at-risk SKUs have zero units on order.",
+    "All five at-risk SKUs have a target months cover of 2 but their current months cover is below 2.",
+    "Propolis Tincture 30ml has the lowest current months cover among all SKUs at approximately 1.22 months.",
+    "Propolis Tincture 30ml has the highest suggested reorder quantity among at-risk SKUs at 146 units.",
+    "Bioactive Blend Recovery 250g has the highest average month-over-month growth rate among all SKUs at approximately 13.65%.",
+    "Manuka Honey MGO 100+ 250g has the lowest average month-over-month growth rate at approximately 3.85%.",
+    "Manuka Honey MGO 100+ 250g has the highest stock on hand at 6,400 units.",
+    "Manuka Honey MGO 100+ 250g has the highest effective months cover at approximately 7.84 months.",
+    "Manuka Honey MGO 263+ 250g generated the highest revenue in Month 4 at approximately 56,124.",
+    "Manuka Honey MGO 263+ 250g sold the most units in Month 4 at 1,604 units.",
+    "Manuka Honey MGO 263+ 250g has 3,200 units on order arriving in 1 month.",
+    "Manuka Honey MGO 1700+ 100g has a target months cover of 3, which is higher than all other SKUs whose target is 2.",
+    "Manuka Honey MGO 1700+ 100g has a suggested reorder quantity of 414 units despite not being flagged as at risk.",
+    "Manuka Honey MGO 850+ 250g has 800 units on order with an arrival time of 2 months.",
+    "Manuka Honey MGO 1700+ 100g has 400 units on order with an arrival time of 2 months.",
+    "Manuka Honey MGO 514+ 250g has 1,600 units on order arriving in 1 month.",
+    "Bioactive Blend Immunity 250g has 800 units on order arriving in 1 month.",
+    "Propolis Tincture 30ml generated the lowest revenue in Month 4 at approximately 5,878.",
+    "Every SKU showed consistent month-over-month sales growth from Month 1 through Month 4.",
+    "Manuka Honey MGO 514+ 500g has a suggested reorder quantity of 77 units.",
+    "Manuka Honey MGO 850+ 500g has a suggested reorder quantity of 96 units.",
+    "Bioactive Blend Energy 250g has a suggested reorder quantity of 36 units.",
+    "Bioactive Blend Recovery 250g has a suggested reorder quantity of 118 units.",
+    "Manuka Honey MGO 263+ 500g has no units on order and is not flagged as at risk with a current months cover of approximately 2.32.",
+    "Bioactive Blend Immunity 250g is not at risk with an effective months cover of approximately 3.79.",
+    "Manuka Honey MGO 850+ 500g has the highest average month-over-month growth rate among the Manuka Honey SKUs at approximately 9.89%.",
+    "Propolis Tincture 30ml had sales of 120 in Month 1, growing to 168 in Month 4.",
+    "Manuka Honey MGO 1700+ 100g generated 17,997 in revenue in Month 4 from 300 units sold."
+] 
+ 
+Claims:
+[
+    "All tracked SKUs showed positive month-over-month growth across the trailing four-month window.",
+    "MGO 263+ 250g had M4 revenue of £56,124.",
+    "MGO 514+ 250g had M4 revenue of £46,991.",
+    "The Bioactive Blend line was launched in Q1 2026 and has three variants.",
+    "Total M4 Revenue across all SKUs was approximately £337,288.",
+    "MoM growth rates ranged from approximately 3.9% to approximately 13.6%.",
+    "5 lines are flagged as at-risk for stock pressure.",
+    "Manuka MGO 263+ 250g had M4 units of 1,604, M4 revenue of £56,124, and MoM growth of +6.5%.",
+    "Manuka MGO 514+ 250g had M4 units of 940, M4 revenue of £46,991, and MoM growth of +7.3%.",
+    "Manuka MGO 263+ 500g had M4 units of 684, M4 revenue of £37,613, and MoM growth of +7.2%.",
+    "Manuka MGO 850+ 250g had M4 units of 536, M4 revenue of £37,515, and MoM growth of +6.8%.",
+    "No SKUs have been formally flagged as poor performers in the current dataset, and all lines show positive and accelerating sales trends.",
+    "The relatively lowest revenue contributor is Propolis Tincture 30ml at £5,878 M4 revenue, approximately 10× lower than the top SKU.",
+    "Propolis Tincture 30ml is growing at +11.9% MoM.",
+    "A bundle strategy pairing Propolis with MGO 263+ 250g as a 'Wellness Bundle' was recommended to enhance average order value without eroding margin.",
+    "No SKU has inbound stock on order among the five at-risk SKUs, meaning current cover figures are not buffered by any pipeline inventory.",
+    "Manuka MGO 514+ 500g has a target cover of 2 months, current cover of 1.82 months, stock on hand of 780 units, and a reorder quantity of 77 units.",
+    "Manuka MGO 850+ 500g has a target cover of 2 months, current cover of 1.64 months, stock on hand of 440 units, and a reorder quantity of 96 units.",
+    "Propolis Tincture 30ml has a target cover of 2 months, current cover of 1.22 months, stock on hand of 230 units, and a reorder quantity of 146 units.",
+    "Bioactive Blend Energy 250g has a target cover of 2 months, current cover of 1.91 months, stock on hand of 740 units, and a reorder quantity of 36 units.",
+    "Bioactive Blend Recovery 250g has a target cover of 2 months, current cover of 1.68 months, stock on hand of 610 units, and a reorder quantity of 118 units.",
+    "The projections are modelled on trailing 4-month momentum only and do not incorporate forward-looking seasonal factors.",
+    "Manuka Honey MGO 850+ 500g carries £26,838 in M4 revenue and is growing at nearly +10% MoM.",
+    "At 1.64 months of effective cover with zero units on order, MGO 850+ 500g could face a stockout within approximately 6–7 weeks without action.",
+    "The 96-unit reorder for MGO 850+ 500g bridges to the minimum 2-month cover target, accounting for projected M5 demand of approximately 268 units.",
+    "Manuka Honey MGO 514+ 500g has £31,356 M4 revenue and +9.3% MoM growth.",
+    "The 77-unit reorder for MGO 514+ 500g is calculated to restore the 2-month cover buffer against a projected M5 demand of approximately 429 units.",
+    "Propolis Tincture 30ml has the lowest current months of cover in the entire portfolio at 1.22 months.",
+    "Propolis Tincture 30ml has a projected M5 demand of approximately 188 units and approximately 5–6 weeks of stock remaining.",
+    "Manuka MGO 1700+ 100g has an effective cover of 3.75 months with 400 units inbound in month 2 and a suggested reorder of 414 units.",
+    "Manuka MGO 1700+ 100g has an elevated 3-month target cover as a premium SKU.",
+    "The three Bioactive Blend SKUs' M5 demand projections have been conservatively modelled using their M4 baseline sales figure as a flat forward projection rather than compounding their observed MoM growth rates.",
+    "The observed MoM growth rates for the Bioactive Blend SKUs range from 11.2% to 13.6%.",
+    "Bioactive Blend Immunity 250g is adequately covered with 800 units inbound.",
+    "Standard sea freight lead times for NZ-origin honey are typically 8–12 weeks.",
+    "MGO 850+ 500g at £26,838 in M4 revenue annualises at over £320,000.",
+    "A 4-week stockout event for MGO 850+ 500g could represent approximately £25,000+ in lost revenue.",
+    "MGO 514+ 500g has higher M4 revenue (£31,356) than MGO 850+ 500g but meaningfully better cover (1.82 months).",
+    "The recommended air freight SKU is Manuka Honey MGO 850+ 500g.",
+    "All cover figures are based on projected M5 demand, and seasonality adjustments have not yet been incorporated.",
+    "The business is operating in a constrained cash-flow environment.",
+    "Reorder prioritisation reflects a revenue-weighted, lead-time-sensitive approach."
+] 
+ 
+Verdicts:
+[
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not provide M4 revenue data for MGO 514+ 250g specifically at \u00a346,991. This figure cannot be verified from the given context."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not mention when the Bioactive Blend line was launched or that it was launched in Q1 2026. It also does not explicitly state there are three variants, though three Bioactive Blend SKUs are mentioned."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not provide total M4 revenue across all SKUs. Only individual revenue figures for select SKUs are given, so \u00a3337,288 cannot be verified."
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context confirms M4 units of 1,604 and M4 revenue of \u00a356,124 for MGO 263+ 250g, but does not provide a MoM growth rate of +6.5% for this SKU."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not provide M4 units, M4 revenue, or MoM growth rate specifically for MGO 514+ 250g."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not provide M4 units, M4 revenue, or MoM growth rate for MGO 263+ 500g beyond its months cover figure."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not provide M4 units or M4 revenue for MGO 850+ 250g. The MoM growth rate of +6.8% is also not mentioned; the context only states MGO 850+ 500g has ~9.89% MoM growth among Manuka SKUs."
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not provide a specific MoM growth rate for Propolis Tincture 30ml. While sales data (120 in M1 to 168 in M4) is given, the claim of +11.9% MoM cannot be directly verified from the context."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not mention any bundle strategy or 'Wellness Bundle' recommendation."
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not mention whether projections incorporate forward-looking seasonal factors or are based solely on trailing 4-month momentum."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not provide M4 revenue of \u00a326,838 for MGO 850+ 500g. The ~9.89% MoM growth is stated for MGO 850+ 500g among Manuka SKUs, which is close to 'nearly +10%'."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context confirms 1.64 months cover and zero units on order for MGO 850+ 500g, but does not provide a stockout timeline of 6-7 weeks."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context confirms the 96-unit reorder for MGO 850+ 500g but does not provide projected M5 demand of approximately 268 units."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not provide M4 revenue of \u00a331,356 or a MoM growth rate of +9.3% for MGO 514+ 500g."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context confirms the 77-unit reorder for MGO 514+ 500g but does not provide projected M5 demand of approximately 429 units."
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not provide projected M5 demand of approximately 188 units or a 5-6 weeks stock remaining estimate for Propolis Tincture 30ml."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context confirms 400 units inbound in 2 months and a suggested reorder of 414 units for MGO 1700+ 100g, but does not state an effective cover of 3.75 months."
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not mention how M5 demand projections for Bioactive Blend SKUs were modelled (flat forward vs. compounding)."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context only provides the MoM growth rate for Bioactive Blend Recovery 250g at ~13.65%. The range of 11.2% to 13.6% for all three Bioactive Blend SKUs cannot be verified."
+    },
+    {
+        "verdict": "yes",
+        "reason": null
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not mention standard sea freight lead times for NZ-origin honey."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not provide M4 revenue of \u00a326,838 for MGO 850+ 500g, so the annualised figure of \u00a3320,000 cannot be verified."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not provide information about potential lost revenue from a 4-week stockout event."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not provide M4 revenue of \u00a331,356 for MGO 514+ 500g. The cover figures (1.82 vs 1.64) are consistent with the context."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not mention any recommendation for air freight for a specific SKU."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not explicitly state that cover figures are based on projected M5 demand or that seasonality adjustments have not been incorporated."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not mention anything about the business operating in a constrained cash-flow environment."
+    },
+    {
+        "verdict": "idk",
+        "reason": "The retrieval context does not describe the reorder prioritisation methodology as revenue-weighted or lead-time-sensitive."
+    }
+]
+ 
+Score: 1.0
+Reason: The score is 1.00 because there are no contradictions between the actual output and the retrieval context. The response is fully faithful to the provided information — great job staying accurate and grounded!
+
+======================================================================
+
+
+======================================================================
+
+Metrics Summary
+
+  - ✅ Air Freight Correctness [GEval] (score: 0.8, threshold: 0.7, strict: False, evaluation model: claude-opus-4-6 (Anthropic), reason: The Actual Output recommends air freighting 'Manuka Honey MGO 850+ 500g', which is explicitly listed as an acceptable alternative in the Expected Output. While the Expected Output identifies 'Manuka Honey MGO 514+ 500g' as the primary candidate due to its higher M4 revenue (£31,356 vs £26,838), the Actual Output provides a thorough, well-reasoned justification for choosing the 850+ 500g instead — citing its lower current cover (1.64 vs 1.82 months), zero pipeline, steeper growth rate (~10% MoM), and imminent stockout risk under standard sea freight lead times. The response explicitly acknowledges that the 514+ 500g has higher revenue but argues the 850+ 500g faces more acute timing risk. This is a defensible, data-driven rationale that would hold up in a real executive briefing. The recommendation is actionable, with specific unit quantities, timeline estimates, and a clear call to action. The only gap versus the Expected Output is that the primary candidate differs, but since the chosen SKU is among the accepted alternatives and the justification is strong, this is a minor deviation., error: None)
+  - ✅ Briefing Completeness [GEval] (score: 1.0, threshold: 0.7, strict: False, evaluation model: claude-opus-4-6 (Anthropic), reason: The response contains all six required sections with exceptional detail and specificity. (1) Executive Summary: Summarizes past month performance with total revenue, top SKUs, and growth rates. (2) Sold well vs. sold poorly analysis: Explicitly covers strong performers with data tables, addresses dead stock (noting none truly exists but identifying the weakest contributor), and provides a thoughtful discount/bundling strategy recommendation for Propolis. (3) Red Flags: Identifies 5 specific SKUs below target cover with a detailed table, and includes a thorough seasonality limitations reminder covering winter wellness, gifting peaks, and New Year resolutions — explicitly noting the model uses trailing 4-month momentum only. (4) Reorder recommendations: Covers 3+ SKUs (MGO 850+ 500g, MGO 514+ 500g, Propolis Tincture 30ml, plus additional notes on MGO 1700+ 100g) with detailed business reasoning referencing lead times, pipeline stock (zero on order), and target cover. (5) Bioactive Blend note: Clearly identifies these as new Q1 2026 launches and explicitly explains conservative demand modelling with rationale about launch halo effects. (6) Air freight recommendation: Provides thorough strategic reasoning with revenue analysis and includes the exactly formatted **AIR FREIGHT SKU: Manuka Honey MGO 850+ 500g** on a clearly delimited line. The formatting, depth, and specificity across all sections are exemplary., error: None)
+  - ✅ Faithfulness (score: 1.0, threshold: 0.7, strict: False, evaluation model: claude-opus-4-6 (Anthropic), reason: The score is 1.00 because there are no contradictions between the actual output and the retrieval context. The response is fully faithful to the provided information — great job staying accurate and grounded!, error: None)
+
+For test case:
+
+  - input: {
+  "all_skus": [
+    {
+      "SKU": "Manuka Honey MGO 100+ 250g",
+      "Total_M1": 924,
+      "Total_M2": 928,
+      "Total_M3": 1024,
+      "Total_M4": 1032,
+      "Revenue_M4": 25789.679999999997,
+      "MoM_Growth_Avg": 0.038529926730357766,
+      "Projected_M5_Sales": 1071.7628843857292,
+      "Stock_On_Hand": 6400,
+      "Units_On_Order": 2000,
+      "Order_Arrival_Months": 1,
+      "Target_Months_Cover": 2,
+      "Current_Months_Cover": 5.971470082832827,
+      "Effective_Months_Cover": 7.837554483718086,
+      "Is_At_Risk": false,
+      "Suggested_Reorder_Qty": 0
+    },
+    {
+      "SKU": "Manuka Honey MGO 263+ 250g",
+      "Total_M1": 1328,
+      "Total_M2": 1408,
+      "Total_M3": 1528,
+      "Total_M4": 1604,
+      "Revenue_M4": 56123.96000000001,
+      "MoM_Growth_Avg": 0.06506881882599412,
+      "Projected_M5_Sales": 1708.3703853968943,
+      "Stock_On_Hand": 7300,
+      "Units_On_Order": 3200,
+      "Order_Arrival_Months": 1,
+      "Target_Months_Cover": 2,
+      "Current_Months_Cover": 4.2730780528626635,
+      "Effective_Months_Cover": 6.146208158227119,
+      "Is_At_Risk": false,
+      "Suggested_Reorder_Qty": 0
+    },
+    {
+      "SKU": "Manuka Honey MGO 263+ 500g",
+      "Total_M1": 556,
+      "Total_M2": 596,
+      "Total_M3": 628,
+      "Total_M4": 684,
+      "Revenue_M4": 37613.16,
+      "MoM_Growth_Avg": 0.0716018985777479,
+      "Projected_M5_Sales": 732.9756986271797,
+      "Stock_On_Hand": 1700,
+      "Units_On_Order": 0,
+      "Order_Arrival_Months": 0,
+      "Target_Months_Cover": 2,
+      "Current_Months_Cover": 2.319312909260157,
+      "Effective_Months_Cover": 2.319312909260157,
+      "Is_At_Risk": false,
+      "Suggested_Reorder_Qty": 0
+    },
+    {
+      "SKU": "Manuka Honey MGO 514+ 250g",
+      "Total_M1": 760,
+      "Total_M2": 808,
+      "Total_M3": 864,
+      "Total_M4": 940,
+      "Revenue_M4": 46990.6,
+      "MoM_Growth_Avg": 0.07347592946429146,
+      "Projected_M5_Sales": 1009.067373696434,
+      "Stock_On_Hand": 3400,
+      "Units_On_Order": 1600,
+      "Order_Arrival_Months": 1,
+      "Target_Months_Cover": 2,
+      "Current_Months_Cover": 3.3694479562301756,
+      "Effective_Months_Cover": 4.955070523867905,
+      "Is_At_Risk": false,
+      "Suggested_Reorder_Qty": 0
+    },
+    {
+      "SKU": "Manuka Honey MGO 514+ 500g",
+      "Total_M1": 300,
+      "Total_M2": 328,
+      "Total_M3": 352,
+      "Total_M4": 392,
+      "Revenue_M4": 31356.079999999998,
+      "MoM_Growth_Avg": 0.09338014289233802,
+      "Projected_M5_Sales": 428.6050160137965,
+      "Stock_On_Hand": 780,
+      "Units_On_Order": 0,
+      "Order_Arrival_Months": 0,
+      "Target_Months_Cover": 2,
+      "Current_Months_Cover": 1.8198573765055805,
+      "Effective_Months_Cover": 1.8198573765055805,
+      "Is_At_Risk": true,
+      "Suggested_Reorder_Qty": 77
+    },
+    {
+      "SKU": "Manuka Honey MGO 850+ 250g",
+      "Total_M1": 440,
+      "Total_M2": 472,
+      "Total_M3": 500,
+      "Total_M4": 536,
+      "Revenue_M4": 37514.64,
+      "MoM_Growth_Avg": 0.06801643554185927,
+      "Projected_M5_Sales": 572.4568094504366,
+      "Stock_On_Hand": 1900,
+      "Units_On_Order": 800,
+      "Order_Arrival_Months": 2,
+      "Target_Months_Cover": 2,
+      "Current_Months_Cover": 3.3190276866896147,
+      "Effective_Months_Cover": 4.7165130284536625,
+      "Is_At_Risk": false,
+      "Suggested_Reorder_Qty": 0
+    },
+    {
+      "SKU": "Manuka Honey MGO 850+ 500g",
+      "Total_M1": 184,
+      "Total_M2": 208,
+      "Total_M3": 224,
+      "Total_M4": 244,
+      "Revenue_M4": 26837.559999999998,
+      "MoM_Growth_Avg": 0.09888119127249562,
+      "Projected_M5_Sales": 268.1270106704889,
+      "Stock_On_Hand": 440,
+      "Units_On_Order": 0,
+      "Order_Arrival_Months": 0,
+      "Target_Months_Cover": 2,
+      "Current_Months_Cover": 1.641013335059824,
+      "Effective_Months_Cover": 1.641013335059824,
+      "Is_At_Risk": true,
+      "Suggested_Reorder_Qty": 96
+    },
+    {
+      "SKU": "Manuka Honey MGO 1700+ 100g",
+      "Total_M1": 224,
+      "Total_M2": 248,
+      "Total_M3": 264,
+      "Total_M4": 300,
+      "Revenue_M4": 17997.0,
+      "MoM_Growth_Avg": 0.10267420751291718,
+      "Projected_M5_Sales": 330.80226225387514,
+      "Stock_On_Hand": 840,
+      "Units_On_Order": 400,
+      "Order_Arrival_Months": 2,
+      "Target_Months_Cover": 3,
+      "Current_Months_Cover": 2.5392813044166536,
+      "Effective_Months_Cover": 3.7484628779483935,
+      "Is_At_Risk": false,
+      "Suggested_Reorder_Qty": 414
+    },
+    {
+      "SKU": "Propolis Tincture 30ml",
+      "Total_M1": 120,
+      "Total_M2": 140,
+      "Total_M3": 152,
+      "Total_M4": 168,
+      "Revenue_M4": 5878.320000000001,
+      "MoM_Growth_Avg": 0.11921470342522973,
+      "Projected_M5_Sales": 188.02807017543861,
+      "Stock_On_Hand": 230,
+      "Units_On_Order": 0,
+      "Order_Arrival_Months": 0,
+      "Target_Months_Cover": 2,
+      "Current_Months_Cover": 1.223221616779876,
+      "Effective_Months_Cover": 1.223221616779876,
+      "Is_At_Risk": true,
+      "Suggested_Reorder_Qty": 146
+    },
+    {
+      "SKU": "Bioactive Blend Immunity 250g",
+      "Total_M1": 384,
+      "Total_M2": 424,
+      "Total_M3": 472,
+      "Total_M4": 528,
+      "Revenue_M4": 21114.72,
+      "MoM_Growth_Avg": 0.11200609387769606,
+      "Projected_M5_Sales": 528.0,
+      "Stock_On_Hand": 1200,
+      "Units_On_Order": 800,
+      "Order_Arrival_Months": 1,
+      "Target_Months_Cover": 2,
+      "Current_Months_Cover": 2.272727272727273,
+      "Effective_Months_Cover": 3.787878787878788,
+      "Is_At_Risk": false,
+      "Suggested_Reorder_Qty": 0
+    },
+    {
+      "SKU": "Bioactive Blend Energy 250g",
+      "Total_M1": 272,
+      "Total_M2": 308,
+      "Total_M3": 348,
+      "Total_M4": 388,
+      "Revenue_M4": 15516.12,
+      "MoM_Growth_Avg": 0.12572186659407755,
+      "Projected_M5_Sales": 388.0,
+      "Stock_On_Hand": 740,
+      "Units_On_Order": 0,
+      "Order_Arrival_Months": 0,
+      "Target_Months_Cover": 2,
+      "Current_Months_Cover": 1.907216494845361,
+      "Effective_Months_Cover": 1.907216494845361,
+      "Is_At_Risk": true,
+      "Suggested_Reorder_Qty": 36
+    },
+    {
+      "SKU": "Bioactive Blend Recovery 250g",
+      "Total_M1": 248,
+      "Total_M2": 284,
+      "Total_M3": 320,
+      "Total_M4": 364,
+      "Revenue_M4": 14556.36,
+      "MoM_Growth_Avg": 0.13647395123428746,
+      "Projected_M5_Sales": 364.0,
+      "Stock_On_Hand": 610,
+      "Units_On_Order": 0,
+      "Order_Arrival_Months": 0,
+      "Target_Months_Cover": 2,
+      "Current_Months_Cover": 1.6758241758241759,
+      "Effective_Months_Cover": 1.6758241758241759,
+      "Is_At_Risk": true,
+      "Suggested_Reorder_Qty": 118
+    }
+  ],
+  "skus_at_risk": [
+    {
+      "SKU": "Manuka Honey MGO 514+ 500g",
+      "Total_M1": 300,
+      "Total_M2": 328,
+      "Total_M3": 352,
+      "Total_M4": 392,
+      "Revenue_M4": 31356.079999999998,
+      "MoM_Growth_Avg": 0.09338014289233802,
+      "Projected_M5_Sales": 428.6050160137965,
+      "Stock_On_Hand": 780,
+      "Units_On_Order": 0,
+      "Order_Arrival_Months": 0,
+      "Target_Months_Cover": 2,
+      "Current_Months_Cover": 1.8198573765055805,
+      "Effective_Months_Cover": 1.8198573765055805,
+      "Is_At_Risk": true,
+      "Suggested_Reorder_Qty": 77
+    },
+    {
+      "SKU": "Manuka Honey MGO 850+ 500g",
+      "Total_M1": 184,
+      "Total_M2": 208,
+      "Total_M3": 224,
+      "Total_M4": 244,
+      "Revenue_M4": 26837.559999999998,
+      "MoM_Growth_Avg": 0.09888119127249562,
+      "Projected_M5_Sales": 268.1270106704889,
+      "Stock_On_Hand": 440,
+      "Units_On_Order": 0,
+      "Order_Arrival_Months": 0,
+      "Target_Months_Cover": 2,
+      "Current_Months_Cover": 1.641013335059824,
+      "Effective_Months_Cover": 1.641013335059824,
+      "Is_At_Risk": true,
+      "Suggested_Reorder_Qty": 96
+    },
+    {
+      "SKU": "Propolis Tincture 30ml",
+      "Total_M1": 120,
+      "Total_M2": 140,
+      "Total_M3": 152,
+      "Total_M4": 168,
+      "Revenue_M4": 5878.320000000001,
+      "MoM_Growth_Avg": 0.11921470342522973,
+      "Projected_M5_Sales": 188.02807017543861,
+      "Stock_On_Hand": 230,
+      "Units_On_Order": 0,
+      "Order_Arrival_Months": 0,
+      "Target_Months_Cover": 2,
+      "Current_Months_Cover": 1.223221616779876,
+      "Effective_Months_Cover": 1.223221616779876,
+      "Is_At_Risk": true,
+      "Suggested_Reorder_Qty": 146
+    },
+    {
+      "SKU": "Bioactive Blend Energy 250g",
+      "Total_M1": 272,
+      "Total_M2": 308,
+      "Total_M3": 348,
+      "Total_M4": 388,
+      "Revenue_M4": 15516.12,
+      "MoM_Growth_Avg": 0.12572186659407755,
+      "Projected_M5_Sales": 388.0,
+      "Stock_On_Hand": 740,
+      "Units_On_Order": 0,
+      "Order_Arrival_Months": 0,
+      "Target_Months_Cover": 2,
+      "Current_Months_Cover": 1.907216494845361,
+      "Effective_Months_Cover": 1.907216494845361,
+      "Is_At_Risk": true,
+      "Suggested_Reorder_Qty": 36
+    },
+    {
+      "SKU": "Bioactive Blend Recovery 250g",
+      "Total_M1": 248,
+      "Total_M2": 284,
+      "Total_M3": 320,
+      "Total_M4": 364,
+      "Revenue_M4": 14556.36,
+      "MoM_Growth_Avg": 0.13647395123428746,
+      "Projected_M5_Sales": 364.0,
+      "Stock_On_Hand": 610,
+      "Units_On_Order": 0,
+      "Order_Arrival_Months": 0,
+      "Target_Months_Cover": 2,
+      "Current_Months_Cover": 1.6758241758241759,
+      "Effective_Months_Cover": 1.6758241758241759,
+      "Is_At_Risk": true,
+      "Suggested_Reorder_Qty": 118
+    }
+  ],
+  "poor_performers": []
+}
+  - actual output: # S&OP Executive Briefing — Weekly Review
+**Prepared by:** Supply Chain & S&OP | **Classification:** Executive Team Only
+**Read Time:** ~4 minutes
+
+---
+
+## 1. 📊 Executive Summary — Past Month Performance
+
+The business delivered a strong month overall, with **all tracked SKUs showing positive month-over-month growth** across the trailing four-month window. Our core Manuka range continues to be the primary revenue engine, led by **MGO 263+ 250g** (M4 revenue: **£56,124**) and **MGO 514+ 250g** (M4 revenue: **£46,991**). The Bioactive Blend line, launched in Q1 2026, has demonstrated encouraging early traction and is building momentum across all three variants.
+
+**Total M4 Revenue across all SKUs: ~£337,288**, with healthy growth trajectories (MoM growth rates ranging from ~3.9% to ~13.6%) reinforcing strong demand fundamentals. However, that same growth is creating stock pressure on several SKUs — **5 lines are now flagged as at-risk** — and requires immediate action this week.
+
+> ⚠️ **Cash-flow note:** We are operating in a constrained environment. Reorder prioritisation below reflects a revenue-weighted, lead-time-sensitive approach.
+
+---
+
+## 2. 🏆 Winners & Laggards
+
+### ✅ What Sold Well
+| SKU | M4 Units | M4 Revenue | MoM Growth |
+|---|---|---|---|
+| Manuka MGO 263+ 250g | 1,604 | £56,124 | +6.5% |
+| Manuka MGO 514+ 250g | 940 | £46,991 | +7.3% |
+| Manuka MGO 263+ 500g | 684 | £37,613 | +7.2% |
+| Manuka MGO 850+ 250g | 536 | £37,515 | +6.8% |
+
+The **263+ and 514+ tiers** remain our volume and value workhorses. The 500g formats across premium MGO ratings are also showing encouraging growth — consumers are trading up on pack size, a positive sign for basket value.
+
+---
+
+### ❌ Worst Performer — Dead Stock Alert
+
+> **No SKUs have been formally flagged as poor performers in the current dataset.** All lines show positive and accelerating sales trends. There is no dead stock in the traditional sense this cycle.
+
+That said, the **relatively lowest revenue contributor** is **Propolis Tincture 30ml** at **£5,878 M4 revenue** — approximately **10× lower** than our top SKU. While it is growing at +11.9% MoM, its absolute volume and revenue contribution are materially below the rest of the range.
+
+**Recommendation on working capital strategy:** At this stage, a **discount or bundle strategy for Propolis is not warranted** — the SKU is *not* accumulating excess stock; in fact, the opposite is true (see Red Flags below). We should **resist the temptation to discount a growing product** simply because its revenue is low in absolute terms. Instead, consider a **bundle strategy pairing Propolis with MGO 263+ 250g** as a "Wellness Bundle" — this enhances average order value without eroding margin on either SKU individually. This can be revisited if a genuine overstock situation arises.
+
+---
+
+## 3. 🚨 Red Flags — SKUs Below Target Cover
+
+Five SKUs are currently below their target months of cover. **No SKU has inbound stock on order**, meaning current cover figures are not buffered by any pipeline inventory.
+
+| SKU | Target Cover | Current Cover | Stock on Hand | Reorder Qty |
+|---|---|---|---|---|
+| Manuka MGO 514+ 500g | 2 months | **1.82 months** | 780 units | 77 |
+| Manuka MGO 850+ 500g | 2 months | **1.64 months** | 440 units | 96 |
+| Propolis Tincture 30ml | 2 months | **1.22 months** | 230 units | 146 |
+| Bioactive Blend Energy 250g | 2 months | **1.91 months** | 740 units | 36 |
+| Bioactive Blend Recovery 250g | 2 months | **1.68 months** | 610 units | 118 |
+
+> ⚠️ **Critical Seasonality Reminder to the Executive Team:** These projections are modelled on **trailing 4-month momentum only**. They do **not** incorporate forward-looking seasonal factors. The team must pressure-test these numbers against:
+> - **Winter wellness demand uplift** (particularly relevant for Propolis, MGO 850+, and the Bioactive Immunity/Recovery blends — historically these categories see a significant Q4 demand spike driven by cold & flu season).
+> - **Gift-giving and retail gifting peaks** (premium 500g formats and high-MGO tiers are disproportionately impacted by holiday gifting windows).
+> - **New Year health resolutions** (January historically drives demand for functional health products — directly relevant to the Bioactive Blend line).
+>
+> **The reorder quantities below should be treated as minimum floors, not ceilings, if any seasonal uplift is anticipated.**
+
+---
+
+## 4. 📦 Reorder Recommendations
+
+Given constrained cash-flow, reorders are **prioritised by revenue contribution vs. lead time urgency**, not simply by risk flag.
+
+---
+
+### 🔴 Priority 1 — Manuka Honey MGO 850+ 500g
+**Reorder: 96 units**
+
+**Business Rationale:** This SKU carries **£26,838 in M4 revenue** and is growing at nearly **+10% MoM** — one of the steeper growth rates in the core Manuka range. At only **1.64 months of effective cover with zero units on order**, this is the most time-critical at-risk SKU relative to its revenue contribution. There is no pipeline buffer whatsoever. With no order in transit, the lead time clock starts now, and at the current rate of sale acceleration, we could face a stockout within approximately **6–7 weeks** without action. The 96-unit reorder bridges us to the minimum 2-month cover target, accounting for projected M5 demand of ~268 units. **Place this order immediately.**
+
+---
+
+### 🟠 Priority 2 — Manuka Honey MGO 514+ 500g
+**Reorder: 77 units**
+
+**Business Rationale:** At **£31,356 M4 revenue**, this is actually the higher-revenue SKU of the two at-risk 500g Manuka lines, but its current cover of **1.82 months** is slightly less acute than the 850+ 500g. It still has no units on order and no pipeline. The 77-unit reorder is calculated to restore the 2-month cover buffer against a projected M5 demand of ~429 units. Given its strong revenue contribution and +9.3% MoM growth, failure to reorder this week risks a stockout that directly impacts top-line revenue. Note that the **500g format commands a higher unit price**, making each lost sale disproportionately costly. **Order this week, immediately after the 850+ 500g.**
+
+---
+
+### 🟡 Priority 3 — Propolis Tincture 30ml
+**Reorder: 146 units**
+
+**Business Rationale:** This SKU has the lowest current months of cover in the entire portfolio at **1.22 months** — the most severe cover shortfall by this metric. With only **230 units on hand** and zero on order, and a projected M5 demand of ~188 units, we have approximately **5–6 weeks of stock remaining**. The revenue contribution (£5,878) is the lowest in the range in absolute terms, which depresses its cash-priority ranking relative to the Manuka 500g lines above. However, its **steep 11.9% MoM growth** and its role as a brand-building, cross-sell product (see bundling note in Section 2) mean a stockout here has a disproportionate brand impact. The 146-unit reorder restores a 2-month cover position. If lead times on Propolis are longer than standard, escalate this to Priority 1. **Clarify lead time with the supplier today.**
+
+---
+
+### ℹ️ Additional Note — Manuka MGO 1700+ 100g
+**Suggested Reorder: 414 units**
+
+While not flagged as at-risk (effective cover: 3.75 months with 400 units inbound in month 2), the data suggests a planned reorder of 414 units has been pre-calculated — likely to maintain the elevated 3-month target cover for this premium SKU. Given current cash constraints, **we recommend deferring this order by 2–3 weeks** until the at-risk SKUs above are resolved. Monitor closely as the inbound 400 units arrive.
+
+---
+
+## 5. 🆕 Bioactive Blend Line — Q1 2026 Launch Note
+
+The team should be aware of a **deliberate modelling decision** applied to the three Bioactive Blend SKUs (Immunity, Energy, and Recovery 250g):
+
+> **These products are new Q1 2026 launches. Their M5 demand projections have been conservatively modelled using their M4 baseline sales figure as a flat forward projection — rather than compounding their observed MoM growth rates (which range from 11.2% to 13.6%).**
+
+**Why we've done this:** Early-stage products frequently exhibit an **initial launch spike** driven by novelty, launch promotions, PR, and influencer activity. Compounding this elevated early growth forward would likely result in over-ordering — tying up working capital in stock that may not move at the same pace once the launch halo fades. By anchoring to the M4 baseline, we are protecting cash flow while still ensuring we carry sufficient stock to meet real, sustainable demand.
+
+**Important caveat for the team:** If the commercial team has visibility of upcoming campaigns, retail listings, or media placements for the Bioactive range in Q2 2026, these projections should be revised upward accordingly. **The conservative model is a floor, not a ceiling.**
+
+Two Bioactive SKUs — **Energy 250g** (1.91 months cover) and **Recovery 250g** (1.68 months cover) — are currently at risk even on the conservative model, confirming demand is real and persistent. Reorders of **36 units and 118 units** respectively are recommended. Immunity 250g is adequately covered with 800 units inbound.
+
+---
+
+## 6. ✈️ Strategic Priority — Air Freight Decision
+
+### The Case
+
+Weighing revenue contribution against stock risk across all at-risk SKUs:
+
+| SKU | M4 Revenue | Current Cover | Units on Hand | On Order |
+|---|---|---|---|---|
+| MGO 514+ 500g | £31,356 | 1.82 months | 780 | 0 |
+| **MGO 850+ 500g** | **£26,838** | **1.64 months** | **440** | **0** |
+| Propolis 30ml | £5,878 | 1.22 months | 230 | 0 |
+| Bioactive Energy 250g | £15,516 | 1.91 months | 740 | 0 |
+| Bioactive Recovery 250g | £14,556 | 1.68 months | 610 | 0 |
+
+### Recommendation: Air Freight **Manuka Honey MGO 850+ 500g**
+
+Here is the logic:
+
+1. **Stockout risk is imminent.** At 1.64 months of cover with zero pipeline, and growing at ~+10% MoM, this SKU faces a stockout in approximately **6–7 weeks** under standard sea freight lead times (typically 8–12 weeks for NZ-origin honey). Standard freight **will not arrive in time.**
+
+2. **Revenue at stake is material.** At £26,838 in M4 revenue — and accelerating — this SKU annualises at over **£320,000**. Even a 4-week stockout event could represent **~£25,000+ in lost revenue**, which, in the context of most air freight premiums for a 96-unit top-up order, likely **justifies the freight cost on a pure P&L basis.**
+
+3. **Why not MGO 514+ 500g first?** The 514+ 500g has higher M4 revenue (£31,356) but meaningfully better cover (1.82 months). It is a concern, but it is not yet in the same acute risk window. Standard freight may still resolve it in time if ordered this week.
+
+4. **Why not Propolis?** The cover position is worse (1.22 months), but the revenue at stake (£5,878) does not justify the premium cost of air freight for a low-unit-value tincture product. Standard expedited shipping should suffice.
+
+**Action required:** Confirm supplier availability for an emergency 96-unit pick of MGO 850+ 500g and obtain air freight quote by **close of business today**. Cross-reference the freight cost against the projected lost-revenue figure before final sign-off.
+
+---
+
+**AIR FREIGHT SKU: Manuka Honey MGO 850+ 500g**
+
+---
+
+*Briefing prepared for executive review. Data sourced from pre-calculated S&OP model. All cover figures based on projected M5 demand. Seasonality adjustments not yet incorporated — commercial team to advise.*
+  - expected output: The air freight recommendation should identify 'Manuka Honey MGO 514+ 500g' as the primary candidate, since it is the at-risk SKU with the highest Revenue_M4. Acceptable alternatives: {'Manuka Honey MGO 850+ 500g', 'Manuka Honey MGO 514+ 500g'}.
+  - context: None
+  - retrieval context: ['{\n  "all_skus": [\n    {\n      "SKU": "Manuka Honey MGO 100+ 250g",\n      "Total_M1": 924,\n      "Total_M2": 928,\n      "Total_M3": 1024,\n      "Total_M4": 1032,\n      "Revenue_M4": 25789.679999999997,\n      "MoM_Growth_Avg": 0.038529926730357766,\n      "Projected_M5_Sales": 1071.7628843857292,\n      "Stock_On_Hand": 6400,\n      "Units_On_Order": 2000,\n      "Order_Arrival_Months": 1,\n      "Target_Months_Cover": 2,\n      "Current_Months_Cover": 5.971470082832827,\n      "Effective_Months_Cover": 7.837554483718086,\n      "Is_At_Risk": false,\n      "Suggested_Reorder_Qty": 0\n    },\n    {\n      "SKU": "Manuka Honey MGO 263+ 250g",\n      "Total_M1": 1328,\n      "Total_M2": 1408,\n      "Total_M3": 1528,\n      "Total_M4": 1604,\n      "Revenue_M4": 56123.96000000001,\n      "MoM_Growth_Avg": 0.06506881882599412,\n      "Projected_M5_Sales": 1708.3703853968943,\n      "Stock_On_Hand": 7300,\n      "Units_On_Order": 3200,\n      "Order_Arrival_Months": 1,\n      "Target_Months_Cover": 2,\n      "Current_Months_Cover": 4.2730780528626635,\n      "Effective_Months_Cover": 6.146208158227119,\n      "Is_At_Risk": false,\n      "Suggested_Reorder_Qty": 0\n    },\n    {\n      "SKU": "Manuka Honey MGO 263+ 500g",\n      "Total_M1": 556,\n      "Total_M2": 596,\n      "Total_M3": 628,\n      "Total_M4": 684,\n      "Revenue_M4": 37613.16,\n      "MoM_Growth_Avg": 0.0716018985777479,\n      "Projected_M5_Sales": 732.9756986271797,\n      "Stock_On_Hand": 1700,\n      "Units_On_Order": 0,\n      "Order_Arrival_Months": 0,\n      "Target_Months_Cover": 2,\n      "Current_Months_Cover": 2.319312909260157,\n      "Effective_Months_Cover": 2.319312909260157,\n      "Is_At_Risk": false,\n      "Suggested_Reorder_Qty": 0\n    },\n    {\n      "SKU": "Manuka Honey MGO 514+ 250g",\n      "Total_M1": 760,\n      "Total_M2": 808,\n      "Total_M3": 864,\n      "Total_M4": 940,\n      "Revenue_M4": 46990.6,\n      "MoM_Growth_Avg": 0.07347592946429146,\n      "Projected_M5_Sales": 1009.067373696434,\n      "Stock_On_Hand": 3400,\n      "Units_On_Order": 1600,\n      "Order_Arrival_Months": 1,\n      "Target_Months_Cover": 2,\n      "Current_Months_Cover": 3.3694479562301756,\n      "Effective_Months_Cover": 4.955070523867905,\n      "Is_At_Risk": false,\n      "Suggested_Reorder_Qty": 0\n    },\n    {\n      "SKU": "Manuka Honey MGO 514+ 500g",\n      "Total_M1": 300,\n      "Total_M2": 328,\n      "Total_M3": 352,\n      "Total_M4": 392,\n      "Revenue_M4": 31356.079999999998,\n      "MoM_Growth_Avg": 0.09338014289233802,\n      "Projected_M5_Sales": 428.6050160137965,\n      "Stock_On_Hand": 780,\n      "Units_On_Order": 0,\n      "Order_Arrival_Months": 0,\n      "Target_Months_Cover": 2,\n      "Current_Months_Cover": 1.8198573765055805,\n      "Effective_Months_Cover": 1.8198573765055805,\n      "Is_At_Risk": true,\n      "Suggested_Reorder_Qty": 77\n    },\n    {\n      "SKU": "Manuka Honey MGO 850+ 250g",\n      "Total_M1": 440,\n      "Total_M2": 472,\n      "Total_M3": 500,\n      "Total_M4": 536,\n      "Revenue_M4": 37514.64,\n      "MoM_Growth_Avg": 0.06801643554185927,\n      "Projected_M5_Sales": 572.4568094504366,\n      "Stock_On_Hand": 1900,\n      "Units_On_Order": 800,\n      "Order_Arrival_Months": 2,\n      "Target_Months_Cover": 2,\n      "Current_Months_Cover": 3.3190276866896147,\n      "Effective_Months_Cover": 4.7165130284536625,\n      "Is_At_Risk": false,\n      "Suggested_Reorder_Qty": 0\n    },\n    {\n      "SKU": "Manuka Honey MGO 850+ 500g",\n      "Total_M1": 184,\n      "Total_M2": 208,\n      "Total_M3": 224,\n      "Total_M4": 244,\n      "Revenue_M4": 26837.559999999998,\n      "MoM_Growth_Avg": 0.09888119127249562,\n      "Projected_M5_Sales": 268.1270106704889,\n      "Stock_On_Hand": 440,\n      "Units_On_Order": 0,\n      "Order_Arrival_Months": 0,\n      "Target_Months_Cover": 2,\n      "Current_Months_Cover": 1.641013335059824,\n      "Effective_Months_Cover": 1.641013335059824,\n      "Is_At_Risk": true,\n      "Suggested_Reorder_Qty": 96\n    },\n    {\n      "SKU": "Manuka Honey MGO 1700+ 100g",\n      "Total_M1": 224,\n      "Total_M2": 248,\n      "Total_M3": 264,\n      "Total_M4": 300,\n      "Revenue_M4": 17997.0,\n      "MoM_Growth_Avg": 0.10267420751291718,\n      "Projected_M5_Sales": 330.80226225387514,\n      "Stock_On_Hand": 840,\n      "Units_On_Order": 400,\n      "Order_Arrival_Months": 2,\n      "Target_Months_Cover": 3,\n      "Current_Months_Cover": 2.5392813044166536,\n      "Effective_Months_Cover": 3.7484628779483935,\n      "Is_At_Risk": false,\n      "Suggested_Reorder_Qty": 414\n    },\n    {\n      "SKU": "Propolis Tincture 30ml",\n      "Total_M1": 120,\n      "Total_M2": 140,\n      "Total_M3": 152,\n      "Total_M4": 168,\n      "Revenue_M4": 5878.320000000001,\n      "MoM_Growth_Avg": 0.11921470342522973,\n      "Projected_M5_Sales": 188.02807017543861,\n      "Stock_On_Hand": 230,\n      "Units_On_Order": 0,\n      "Order_Arrival_Months": 0,\n      "Target_Months_Cover": 2,\n      "Current_Months_Cover": 1.223221616779876,\n      "Effective_Months_Cover": 1.223221616779876,\n      "Is_At_Risk": true,\n      "Suggested_Reorder_Qty": 146\n    },\n    {\n      "SKU": "Bioactive Blend Immunity 250g",\n      "Total_M1": 384,\n      "Total_M2": 424,\n      "Total_M3": 472,\n      "Total_M4": 528,\n      "Revenue_M4": 21114.72,\n      "MoM_Growth_Avg": 0.11200609387769606,\n      "Projected_M5_Sales": 528.0,\n      "Stock_On_Hand": 1200,\n      "Units_On_Order": 800,\n      "Order_Arrival_Months": 1,\n      "Target_Months_Cover": 2,\n      "Current_Months_Cover": 2.272727272727273,\n      "Effective_Months_Cover": 3.787878787878788,\n      "Is_At_Risk": false,\n      "Suggested_Reorder_Qty": 0\n    },\n    {\n      "SKU": "Bioactive Blend Energy 250g",\n      "Total_M1": 272,\n      "Total_M2": 308,\n      "Total_M3": 348,\n      "Total_M4": 388,\n      "Revenue_M4": 15516.12,\n      "MoM_Growth_Avg": 0.12572186659407755,\n      "Projected_M5_Sales": 388.0,\n      "Stock_On_Hand": 740,\n      "Units_On_Order": 0,\n      "Order_Arrival_Months": 0,\n      "Target_Months_Cover": 2,\n      "Current_Months_Cover": 1.907216494845361,\n      "Effective_Months_Cover": 1.907216494845361,\n      "Is_At_Risk": true,\n      "Suggested_Reorder_Qty": 36\n    },\n    {\n      "SKU": "Bioactive Blend Recovery 250g",\n      "Total_M1": 248,\n      "Total_M2": 284,\n      "Total_M3": 320,\n      "Total_M4": 364,\n      "Revenue_M4": 14556.36,\n      "MoM_Growth_Avg": 0.13647395123428746,\n      "Projected_M5_Sales": 364.0,\n      "Stock_On_Hand": 610,\n      "Units_On_Order": 0,\n      "Order_Arrival_Months": 0,\n      "Target_Months_Cover": 2,\n      "Current_Months_Cover": 1.6758241758241759,\n      "Effective_Months_Cover": 1.6758241758241759,\n      "Is_At_Risk": true,\n      "Suggested_Reorder_Qty": 118\n    }\n  ],\n  "skus_at_risk": [\n    {\n      "SKU": "Manuka Honey MGO 514+ 500g",\n      "Total_M1": 300,\n      "Total_M2": 328,\n      "Total_M3": 352,\n      "Total_M4": 392,\n      "Revenue_M4": 31356.079999999998,\n      "MoM_Growth_Avg": 0.09338014289233802,\n      "Projected_M5_Sales": 428.6050160137965,\n      "Stock_On_Hand": 780,\n      "Units_On_Order": 0,\n      "Order_Arrival_Months": 0,\n      "Target_Months_Cover": 2,\n      "Current_Months_Cover": 1.8198573765055805,\n      "Effective_Months_Cover": 1.8198573765055805,\n      "Is_At_Risk": true,\n      "Suggested_Reorder_Qty": 77\n    },\n    {\n      "SKU": "Manuka Honey MGO 850+ 500g",\n      "Total_M1": 184,\n      "Total_M2": 208,\n      "Total_M3": 224,\n      "Total_M4": 244,\n      "Revenue_M4": 26837.559999999998,\n      "MoM_Growth_Avg": 0.09888119127249562,\n      "Projected_M5_Sales": 268.1270106704889,\n      "Stock_On_Hand": 440,\n      "Units_On_Order": 0,\n      "Order_Arrival_Months": 0,\n      "Target_Months_Cover": 2,\n      "Current_Months_Cover": 1.641013335059824,\n      "Effective_Months_Cover": 1.641013335059824,\n      "Is_At_Risk": true,\n      "Suggested_Reorder_Qty": 96\n    },\n    {\n      "SKU": "Propolis Tincture 30ml",\n      "Total_M1": 120,\n      "Total_M2": 140,\n      "Total_M3": 152,\n      "Total_M4": 168,\n      "Revenue_M4": 5878.320000000001,\n      "MoM_Growth_Avg": 0.11921470342522973,\n      "Projected_M5_Sales": 188.02807017543861,\n      "Stock_On_Hand": 230,\n      "Units_On_Order": 0,\n      "Order_Arrival_Months": 0,\n      "Target_Months_Cover": 2,\n      "Current_Months_Cover": 1.223221616779876,\n      "Effective_Months_Cover": 1.223221616779876,\n      "Is_At_Risk": true,\n      "Suggested_Reorder_Qty": 146\n    },\n    {\n      "SKU": "Bioactive Blend Energy 250g",\n      "Total_M1": 272,\n      "Total_M2": 308,\n      "Total_M3": 348,\n      "Total_M4": 388,\n      "Revenue_M4": 15516.12,\n      "MoM_Growth_Avg": 0.12572186659407755,\n      "Projected_M5_Sales": 388.0,\n      "Stock_On_Hand": 740,\n      "Units_On_Order": 0,\n      "Order_Arrival_Months": 0,\n      "Target_Months_Cover": 2,\n      "Current_Months_Cover": 1.907216494845361,\n      "Effective_Months_Cover": 1.907216494845361,\n      "Is_At_Risk": true,\n      "Suggested_Reorder_Qty": 36\n    },\n    {\n      "SKU": "Bioactive Blend Recovery 250g",\n      "Total_M1": 248,\n      "Total_M2": 284,\n      "Total_M3": 320,\n      "Total_M4": 364,\n      "Revenue_M4": 14556.36,\n      "MoM_Growth_Avg": 0.13647395123428746,\n      "Projected_M5_Sales": 364.0,\n      "Stock_On_Hand": 610,\n      "Units_On_Order": 0,\n      "Order_Arrival_Months": 0,\n      "Target_Months_Cover": 2,\n      "Current_Months_Cover": 1.6758241758241759,\n      "Effective_Months_Cover": 1.6758241758241759,\n      "Is_At_Risk": true,\n      "Suggested_Reorder_Qty": 118\n    }\n  ],\n  "poor_performers": []\n}']
+
+======================================================================
+
+Overall Metric Pass Rates
+
+Air Freight Correctness [GEval]: 100.00% pass rate
+Briefing Completeness [GEval]: 100.00% pass rate
+Faithfulness: 100.00% pass rate
+
+======================================================================
+
+
+⚠ WARNING: No hyperparameters logged.
+» Log hyperparameters to attribute prompts and models to your test runs.
+
+================================================================================
+
+
+✓ Evaluation completed 🎉! (time taken: 44.2s | token cost: None)
+» Test Results (1 total tests):
+   » Pass Rate: 100.0% | Passed: 1 | Failed: 0
+
+ ================================================================================ 
+
+» Want to share evals with your team, or a place for your test cases to live? ❤️ 🏡
+  » Run 'deepeval view' to analyze and save testing results on Confident AI.
+
+
