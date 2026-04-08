@@ -16,6 +16,7 @@ from unittest.mock import patch
 import pytest
 
 import sop_engine
+from sop_engine import BIOACTIVE_BLEND_KEYWORD
 
 # Ground truth from the real sales CSV — computed once per session.
 _REAL_DF = sop_engine.calculate(sop_engine.load_and_validate("data/sales-data.csv"))
@@ -29,6 +30,20 @@ _at_risk_by_revenue = _REAL_DF[_REAL_DF["Is_At_Risk"]].nlargest(
     _TOP_N_ACCEPTABLE, "Revenue_M4"
 )
 ACCEPTABLE_AIR_FREIGHT_SKUS: set[str] = {str(s) for s in _at_risk_by_revenue["SKU"]}
+
+# Ground truth: all at-risk SKU names (for Red Flags validation).
+AT_RISK_SKUS: set[str] = {str(s) for s in _REAL_DF[_REAL_DF["Is_At_Risk"]]["SKU"]}
+
+# Ground truth: all SKU names in the dataset (for section parsing).
+ALL_SKUS: set[str] = {str(s) for s in _REAL_DF["SKU"]}
+
+# Ground truth: Bioactive Blend SKUs (must never be flagged as dead stock).
+BIOACTIVE_SKUS: set[str] = {
+    str(s)
+    for s in _REAL_DF[_REAL_DF["SKU"].str.contains(BIOACTIVE_BLEND_KEYWORD, na=False)][
+        "SKU"
+    ]
+}
 
 # Regex to extract the delimited air freight line from LLM markdown output.
 # Handles variations local models produce:
@@ -213,6 +228,130 @@ def test_live_llm_air_freight_matches_ground_truth() -> None:
         f"LLM recommended '{extracted}' which is not in acceptable set: "
         f"{ACCEPTABLE_AIR_FREIGHT_SKUS}"
         f"\n\n--- FULL BRIEFING ---\n\n{briefing}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Shared fixture: generate one live briefing and reuse across content evals
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def live_briefing() -> str:
+    """Generate a single live LLM briefing for all content eval tests.
+
+    Returns:
+        The full LLM-generated briefing markdown string.
+    """
+    import llm_service  # noqa: PLC0415
+
+    payload = sop_engine.build_llm_payload(_REAL_DF)
+    return llm_service.generate_briefing(payload)
+
+
+# ---------------------------------------------------------------------------
+# Content eval: Red Flags section must only reference at-risk SKUs
+# ---------------------------------------------------------------------------
+
+# Pattern to find the Red Flags section (between its heading and the next heading).
+_RED_FLAGS_SECTION = re.compile(
+    r"(?:^|\n)#{1,4}\s*.*red\s*flag.*?\n(.*?)(?=\n#{1,4}\s|\Z)",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+@pytest.mark.integration
+def test_live_llm_red_flags_only_at_risk_skus(live_briefing: str) -> None:
+    """Every SKU mentioned in the Red Flags section must be Is_At_Risk == True."""
+    section_match = _RED_FLAGS_SECTION.search(live_briefing)
+    assert section_match, (
+        "Could not find a 'Red Flags' section in the briefing.\n\n"
+        f"--- FULL BRIEFING ---\n\n{live_briefing}"
+    )
+    section_text = section_match.group(1)
+
+    mentioned_non_at_risk: list[str] = []
+    for sku in ALL_SKUS - AT_RISK_SKUS:
+        if sku in section_text:
+            mentioned_non_at_risk.append(sku)
+
+    assert not mentioned_non_at_risk, (
+        f"Red Flags section mentions SKUs that are NOT at risk: {mentioned_non_at_risk}. "
+        f"Only these SKUs are at risk: {AT_RISK_SKUS}\n\n"
+        f"--- RED FLAGS SECTION ---\n\n{section_text}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Content eval: Bioactive Blend must not be flagged as dead stock
+# ---------------------------------------------------------------------------
+
+# Pattern to find the poor performer / dead stock discussion.
+_POOR_PERFORMER_SECTION = re.compile(
+    r"(?:^|\n)#{1,4}\s*.*(?:poor|worst|dead\s*stock|underperform).*?\n(.*?)(?=\n#{1,4}\s|\Z)",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+@pytest.mark.integration
+def test_live_llm_bioactive_not_dead_stock(live_briefing: str) -> None:
+    """Bioactive Blend SKUs must not appear in the dead stock / poor performer section."""
+    section_match = _POOR_PERFORMER_SECTION.search(live_briefing)
+    if not section_match:
+        # If there's no distinct section, search the full briefing for the
+        # combination of a Bioactive SKU name near dead-stock language.
+        for sku in BIOACTIVE_SKUS:
+            pattern = re.compile(
+                rf"{re.escape(sku)}[^#]*?(?:dead\s*stock|discount|clearance|poor\s*perform)",
+                re.IGNORECASE,
+            )
+            assert not pattern.search(live_briefing), (
+                f"Bioactive Blend SKU '{sku}' is discussed as dead stock / poor performer "
+                f"but it is a new Q1 2026 launch product.\n\n"
+                f"--- FULL BRIEFING ---\n\n{live_briefing}"
+            )
+        return
+
+    section_text = section_match.group(1)
+    mentioned_bioactive: list[str] = []
+    for sku in BIOACTIVE_SKUS:
+        if sku in section_text:
+            mentioned_bioactive.append(sku)
+
+    assert not mentioned_bioactive, (
+        f"Dead stock / poor performer section mentions Bioactive Blend SKUs: "
+        f"{mentioned_bioactive}. These are new Q1 2026 launches and must be excluded.\n\n"
+        f"--- SECTION TEXT ---\n\n{section_text}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Content eval: Top / worst performers must include MoM trend percentages
+# ---------------------------------------------------------------------------
+
+# Matches percentage patterns like "8%", "8.5%", "-3.2%", "12% MoM"
+_MOM_PERCENTAGE_PATTERN = re.compile(r"-?\d+(?:\.\d+)?%")
+
+
+@pytest.mark.integration
+def test_live_llm_performers_include_mom_trend(live_briefing: str) -> None:
+    """Top and worst performer discussions must include MoM growth trend percentages."""
+    performer_section = re.compile(
+        r"(?:^|\n)#{1,4}\s*.*(?:top|best|worst|poor|perform|dead\s*stock).*?\n(.*?)(?=\n#{1,4}\s|\Z)",
+        re.IGNORECASE | re.DOTALL,
+    )
+    sections = performer_section.findall(live_briefing)
+    assert sections, (
+        "Could not find any performer-related sections in the briefing.\n\n"
+        f"--- FULL BRIEFING ---\n\n{live_briefing}"
+    )
+
+    combined_text = "\n".join(sections)
+    percentages = _MOM_PERCENTAGE_PATTERN.findall(combined_text)
+    assert percentages, (
+        "Performer sections do not contain any MoM percentage figures. "
+        "The briefing must explicitly state Month-over-Month growth trends.\n\n"
+        f"--- PERFORMER SECTIONS ---\n\n{combined_text}"
     )
 
 
