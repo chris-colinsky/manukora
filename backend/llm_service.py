@@ -139,6 +139,17 @@ def generate_briefing(payload: dict) -> str:
     )
 
     if langfuse:
+        # Link system prompt as its own observation so Langfuse tracks
+        # observation counts for both prompts independently.
+        if system_result.langfuse_prompt is not None:
+            sys_span = langfuse.start_observation(
+                name="system-prompt",
+                as_type="span",
+                input=system_result.text,
+                prompt=system_result.langfuse_prompt,
+            )
+            sys_span.end()
+
         gen_kwargs: dict[str, Any] = {
             "name": "sop-llm-call",
             "as_type": "generation",
@@ -154,14 +165,8 @@ def generate_briefing(payload: dict) -> str:
                 ),
             },
         }
-        # Link the prompt version that drives this generation.
-        # Langfuse accepts one prompt per observation — use the user prompt
-        # (which contains the data payload) as the primary link, since it
-        # varies per call.  The system prompt is linked via metadata.
         if user_result.langfuse_prompt is not None:
             gen_kwargs["prompt"] = user_result.langfuse_prompt
-        elif system_result.langfuse_prompt is not None:
-            gen_kwargs["prompt"] = system_result.langfuse_prompt
         generation = langfuse.start_observation(**gen_kwargs)
 
     logger.info(
