@@ -21,6 +21,12 @@ dependencies = [
     "uvicorn>=0.44.0",
 ]
 
+[tool.pytest.ini_options]
+markers = [
+    "integration: live LLM tests (require running local LLM, deselected by default)",
+]
+addopts = "-m 'not integration'"
+
 [dependency-groups]
 dev = [
     "pandas-stubs>=3.0.0.260204",

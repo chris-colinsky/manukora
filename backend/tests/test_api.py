@@ -1,13 +1,9 @@
 """Integration tests for the FastAPI endpoints using TestClient."""
 
-import sys
-import os
 from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 # Patch telemetry.setup() before importing api to avoid side effects in tests.
 with patch("telemetry.setup"):

@@ -103,6 +103,28 @@ cd backend && uv run pytest tests/test_sop_engine.py::test_bioactive_blend_proje
 | `/api/v1/download-pos` | GET    | Download draft Purchase Orders CSV (all SKUs with `Suggested_Reorder_Qty > 0`) |
 | `/docs`                | GET    | Interactive Swagger UI                                                         |
 
+### Sample Requests
+
+```bash
+# Generate S&OP briefing (returns JSON with metrics, red flags, and LLM narrative)
+curl http://localhost:8000/api/v1/generate-sop
+
+# Pretty-print the briefing JSON
+curl -s http://localhost:8000/api/v1/generate-sop | python -m json.tool
+
+# Extract just the LLM briefing text
+curl -s http://localhost:8000/api/v1/generate-sop | python -c "import sys,json; print(json.load(sys.stdin)['llm_briefing'])"
+
+# Download draft Purchase Orders as CSV
+curl http://localhost:8000/api/v1/download-pos
+
+# Save POs to a file
+curl -o draft-purchase-orders.csv http://localhost:8000/api/v1/download-pos
+
+# Health check via Swagger docs
+curl -I http://localhost:8000/docs
+```
+
 ## Environment Variables
 
 Each service reads its own `.env` file from its own directory (`backend/.env` and `frontend/.env`). Neither file is committed — copy the root `.env.example` to get started:

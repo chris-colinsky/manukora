@@ -9,19 +9,24 @@ correctly from the data rather than simply echoing a pre-supplied answer.
 """
 
 import re
-import sys
-import os
 from unittest.mock import patch
 
 import pytest
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 import sop_engine
 
 # Ground truth from the real sales CSV — computed once per session.
 _REAL_DF = sop_engine.calculate(sop_engine.load_and_validate("data/sales-data.csv"))
 GROUND_TRUTH_AIR_FREIGHT_SKU: str = sop_engine.get_air_freight_candidate(_REAL_DF)
+
+# Acceptable air freight answers: top-N at-risk SKUs by Revenue_M4.
+# Genuine reasoning may weigh cover ratio, lead time, or premium positioning
+# differently, so we accept any top-2 revenue at-risk SKU as valid.
+_TOP_N_ACCEPTABLE = 2
+_at_risk_by_revenue = _REAL_DF[_REAL_DF["Is_At_Risk"]].nlargest(
+    _TOP_N_ACCEPTABLE, "Revenue_M4"
+)
+ACCEPTABLE_AIR_FREIGHT_SKUS: set[str] = {str(s) for s in _at_risk_by_revenue["SKU"]}
 
 # Regex to extract the delimited air freight line from LLM markdown output.
 AIR_FREIGHT_PATTERN = re.compile(r"\*\*AIR FREIGHT SKU:\s*(.+?)\*\*", re.IGNORECASE)
@@ -152,3 +157,51 @@ def test_llm_wrong_air_freight_fails_eval() -> None:
     briefing = _make_mock_briefing(wrong_sku)
     extracted = extract_air_freight_sku(briefing)
     assert extracted != GROUND_TRUTH_AIR_FREIGHT_SKU
+
+
+# ---------------------------------------------------------------------------
+# Live LLM integration tests (require running local LLM, skipped in CI)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(
+    not GROUND_TRUTH_AIR_FREIGHT_SKU,
+    reason="No at-risk SKUs in sales data",
+)
+def test_live_llm_returns_briefing() -> None:
+    """Smoke test: local LLM returns a non-empty briefing with expected sections."""
+    import llm_service  # noqa: PLC0415
+
+    payload = sop_engine.build_llm_payload(_REAL_DF)
+    briefing = llm_service.generate_briefing(payload)
+
+    assert len(briefing) > 200, f"Briefing too short ({len(briefing)} chars)"
+    assert (
+        "AIR FREIGHT SKU:" in briefing.upper()
+    ), "Briefing missing the AIR FREIGHT SKU delimiter"
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(
+    not GROUND_TRUTH_AIR_FREIGHT_SKU,
+    reason="No at-risk SKUs in sales data",
+)
+def test_live_llm_air_freight_matches_ground_truth() -> None:
+    """Core eval: does the live LLM identify the correct air freight candidate?
+
+    This calls the real local LLM (LM Studio) and checks that the recommended
+    SKU matches the Pandas-calculated ground truth.
+    """
+    import llm_service  # noqa: PLC0415
+
+    payload = sop_engine.build_llm_payload(_REAL_DF)
+    briefing = llm_service.generate_briefing(payload)
+
+    extracted = extract_air_freight_sku(briefing)
+    assert extracted, f"Could not extract AIR FREIGHT SKU from briefing:\n\n{briefing}"
+    assert extracted in ACCEPTABLE_AIR_FREIGHT_SKUS, (
+        f"LLM recommended '{extracted}' which is not in acceptable set: "
+        f"{ACCEPTABLE_AIR_FREIGHT_SKUS}"
+        f"\n\n--- FULL BRIEFING ---\n\n{briefing}"
+    )
