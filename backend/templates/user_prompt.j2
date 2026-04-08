@@ -1,15 +1,74 @@
 Below is the JSON payload containing the analyzed sales and inventory data for this week. It includes total sales, projected demand (accounting for MoM growth), stock risks, and mathematically calculated reorder quantities.
 
-1. Write an Executive Summary of the past month's performance.
-2. Highlight what sold well vs. what sold poorly. For EACH SKU you mention in this section (top sellers AND poor performers), you MUST explicitly state its MoM_Growth_Avg percentage from the data payload (e.g., "growing at 8.3% MoM" or "declining at -4.1% MoM"). Specifically, call out the worst-performing SKU (dead stock) and reason about whether we should implement a discount or bundling strategy to free up working capital. CRITICAL: You MUST ONLY select your dead stock / poor performer SKU from the `poor_performers` list in the data payload. These are SKUs with negative MoM growth AND excess inventory. Do NOT classify any SKU as a poor performer if it does not appear in that list. Do NOT classify any 'Bioactive Blend' SKUs as poor performers or dead stock, as they are newly launched Q1 2026 products with intentionally conservative projections.
-3. Create a 'Red Flags' section for SKUs falling below target cover. CRITICAL: You MUST ONLY select SKUs that are explicitly flagged as `Is_At_Risk == True` in the data payload. Do NOT mention any SKU in this section if its `Effective_Months_Cover` is greater than or equal to its `Target_Months_Cover`. Note that projections are based on trailing 4-month momentum; explicitly remind the team to consider upcoming seasonality factors.
-4. Make reorder recommendations for at least 3 SKUs. Use the 'Suggested_Reorder_Qty' provided, but write out the genuine business reasoning for *why* we are ordering that amount (e.g., referencing lead times, current pipeline, and target cover). If multiple items need reordering, prioritise them: reason about which one is the highest priority based on its revenue contribution (Revenue_M4) vs. its lead time, assuming a constrained cash-flow environment. Note: SKUs with `Order_Arrival_Months = 0` can be fulfilled immediately from existing domestic supply lines — highlight this as an advantage when recommending reorders for these items, as it means stock can arrive with no shipping delay.
-5. Acknowledge the 'Bioactive Blend' line as new Q1 2026 products. Explain to the team that to avoid over-ordering on an initial launch spike, we have conservatively modelled their future demand using their current M4 baseline rather than compounding their initial MoM growth.
-6. **Strategic Priority (Air Freight):** Look at the `skus_at_risk` list in the data payload. Sort them by `Revenue_M4` descending. The SKU with the HIGHEST `Revenue_M4` in that list is your air freight candidate — it is the most critical to protect because it generates the most revenue and is at risk of stocking out. CRITICAL: You MUST select the single highest-revenue at-risk SKU. Do NOT select a lower-revenue SKU. State its Revenue_M4 value and Effective_Months_Cover explicitly. Justify why paying an air freight premium is worth it to protect this top-line revenue.
+Write the briefing by completing each section below IN ORDER.
 
-   You MUST end this section with exactly this line on its own, with the entire line wrapped in double-asterisk bold markers:
-   **AIR FREIGHT SKU: Manuka Honey MGO 514+ 500g**
-   Replace the example SKU name with your actual recommendation. The line MUST start with ** and end with ** — do not omit the bold markers.
+---
+
+### SECTION 1: Executive Summary
+Write a brief executive summary of the past month's performance.
+
+---
+
+### SECTION 2: Top Performers
+Identify the top 2-3 selling SKUs by Revenue_M4.
+RULE: For EACH SKU you mention, state its MoM_Growth_Avg as a percentage (e.g., "growing at 8.3% MoM").
+RULE: Also mention their Total_M4 volume and Revenue_M4 value.
+
+---
+
+### SECTION 3: Poor Performers / Dead Stock
+Identify the worst-performing SKU and recommend a discount or bundling strategy to free up working capital.
+
+RULE: You MUST ONLY choose from the `poor_performers` list in the data payload. This list contains SKUs with NEGATIVE MoM growth AND excess inventory (cover > 6 months). If the `poor_performers` list is empty, state that no SKUs currently meet the dead stock criteria.
+RULE: State the chosen SKU's MoM_Growth_Avg percentage and Effective_Months_Cover.
+
+*** FORBIDDEN — READ CAREFULLY ***
+Do NOT mention any "Bioactive Blend" SKU in this section. Bioactive Blend products are NEW Q1 2026 launches — they are NOT dead stock and NOT poor performers. Even if their sales volume looks low, this is expected for new products. Skip them entirely here.
+
+---
+
+### SECTION 4: Red Flags
+List ALL SKUs where Is_At_Risk == True (i.e., every SKU in the `skus_at_risk` list from the payload). Present them in a table with their Current_Months_Cover, Effective_Months_Cover, and Target_Months_Cover.
+
+RULE: Include EVERY SKU from the `skus_at_risk` list. Do not omit any.
+RULE: Do NOT include any SKU where Is_At_Risk == False.
+RULE: Remind the team that projections are based on trailing 4-month momentum and to consider upcoming seasonality factors.
+
+---
+
+### SECTION 5: Reorder Recommendations
+Make reorder recommendations for at least 3 SKUs. Use the Suggested_Reorder_Qty values from the data.
+
+RULE: Write out the business reasoning for each (referencing lead times, current pipeline, and target cover).
+RULE: Prioritise by revenue contribution (Revenue_M4) vs. lead time, assuming constrained cash flow.
+RULE: SKUs with Order_Arrival_Months = 0 can be fulfilled immediately from domestic supply lines — highlight this as an advantage (no shipping delay).
+
+---
+
+### SECTION 6: Bioactive Blend Line
+Acknowledge the Bioactive Blend products as new Q1 2026 launches. Explain that to avoid over-ordering on an initial launch spike, we have conservatively modelled their future demand using their current M4 baseline rather than compounding their initial MoM growth.
+
+---
+
+### SECTION 7: Strategic Priority (Air Freight)
+
+Step 1: Look at the `skus_at_risk` list in the data payload.
+Step 2: Find the SKU with the HIGHEST Revenue_M4 value in that list.
+Step 3: That SKU is your air freight candidate. No other SKU is acceptable.
+
+RULE: State the SKU's Revenue_M4 value and Effective_Months_Cover explicitly in your reasoning.
+RULE: Justify why paying an air freight premium protects top-line revenue.
+
+You MUST end this section with exactly one line formatted like this (replace the example SKU with your pick):
+
+**AIR FREIGHT SKU: Manuka Honey MGO 514+ 500g**
+
+CRITICAL FORMATTING RULES FOR THE LINE ABOVE:
+- The line MUST begin with ** (two asterisks)
+- The line MUST end with ** (two asterisks)
+- Do NOT omit the asterisks. Do NOT split them. The entire line is bold.
+
+---
 
 DATA PAYLOAD:
 
