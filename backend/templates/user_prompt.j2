@@ -17,13 +17,15 @@ RULE: Also mention their Total_M4 volume and Revenue_M4 value.
 ---
 
 ### SECTION 3: Poor Performers / Dead Stock
-Identify the worst-performing SKU and recommend a discount or bundling strategy to free up working capital.
 
-RULE: You MUST ONLY choose from the `poor_performers` list in the data payload. This list contains SKUs with NEGATIVE MoM growth AND excess inventory (cover > 6 months). If the `poor_performers` list is empty, state that no SKUs currently meet the dead stock criteria.
-RULE: State the chosen SKU's MoM_Growth_Avg percentage and Effective_Months_Cover.
+FIRST: Check the `poor_performers` list in the data payload.
+
+IF the `poor_performers` list is EMPTY (it contains zero items): Write "No SKUs currently meet our dead stock criteria (negative MoM growth with excess inventory above 6 months of cover). All products are either growing or have appropriate stock levels." Then move on to Section 4. Do NOT pick a SKU from elsewhere in the data. Do NOT invent a poor performer.
+
+IF the `poor_performers` list is NOT empty: Identify the worst-performing SKU from THAT LIST ONLY and recommend a discount or bundling strategy to free up working capital. State the chosen SKU's MoM_Growth_Avg percentage and Effective_Months_Cover.
 
 *** FORBIDDEN — READ CAREFULLY ***
-Do NOT mention any "Bioactive Blend" SKU in this section. Bioactive Blend products are NEW Q1 2026 launches — they are NOT dead stock and NOT poor performers. Even if their sales volume looks low, this is expected for new products. Skip them entirely here.
+Do NOT mention any "Bioactive Blend" SKU in this section. Bioactive Blend products are NEW Q1 2026 launches — they are NOT dead stock and NOT poor performers. Do NOT label any SKU as dead stock unless it appears in the `poor_performers` list.
 
 ---
 

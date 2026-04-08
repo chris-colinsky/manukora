@@ -90,12 +90,12 @@ make pre-commit       # install and run pre-commit hooks
 
 The project has three tiers of tests:
 
-| Suite        | File                 | Tests                  | What it validates                                                                                                   |
-|--------------|----------------------|------------------------|---------------------------------------------------------------------------------------------------------------------|
-| **Unit**     | `test_sop_engine.py` | 23                     | Every supply chain formula, edge cases (division by zero, Bioactive Blend exception), reorder calculations          |
-| **API**      | `test_api.py`        | 10                     | FastAPI endpoints via TestClient, error handling, CSV download format                                               |
+| Suite        | File                 | Tests                  | What it validates                                                                                                                        |
+|--------------|----------------------|------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| **Unit**     | `test_sop_engine.py` | 23                     | Every supply chain formula, edge cases (division by zero, Bioactive Blend exception), reorder calculations                               |
+| **API**      | `test_api.py`        | 10                     | FastAPI endpoints via TestClient, error handling, CSV download format                                                                    |
 | **LLM Eval** | `test_evals.py`      | 8 unit + 6 integration | Air freight extraction, ground truth validation, red flags integrity, Bioactive Blend exclusion, dead stock validity, MoM trend presence |
-| **deepeval** | `run_evals.py`       | 3 metrics              | Air freight correctness, briefing completeness, faithfulness (Claude Opus as judge)                                 |
+| **deepeval** | `run_evals.py`       | 3 metrics              | Air freight correctness, briefing completeness, faithfulness (Claude Opus as judge)                                                      |
 
 ### Running Unit & API Tests (no LLM required)
 
@@ -154,6 +154,23 @@ Results from running `make test-eval` against different LLM backends (scored by 
 | Gemma 4 26B         | local       | 0.1               | 0.8                | 1.0                | 1/3 failed |
 
 Thresholds shown in parentheses. Full results: [`_docs/production-eval-results.txt`](_docs/production-eval-results.txt) | [`_docs/local-eval-results.txt`](_docs/local-eval-results.txt)
+
+### Local LLM Testing as a Prompt Hardening Strategy
+
+We deliberately test against a smaller, open-weight model (Mistral Small 3 24B via LM Studio) during development. Smaller models are notoriously worse at following subtle prompt instructions than Claude Sonnet, which makes them ideal for exposing weak spots in prompt engineering. If a prompt works reliably on Mistral Small, it will be bulletproof on Claude.
+
+This approach caught several critical issues that the deepeval metrics alone missed:
+
+| Issue                                   | What happened                                                                                                      | How we caught it                                                               | Fix                                                                                                                              |
+|-----------------------------------------|--------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| **Hallucinated Red Flags**              | LLM flagged SKUs as "at risk" when their effective cover exceeded target                                           | Visual review of local output vs. Pandas ground truth table                    | Added `MUST ONLY select SKUs where Is_At_Risk == True` constraint; added `test_live_llm_red_flags_only_at_risk_skus` eval        |
+| **Bioactive Blend as dead stock**       | LLM classified new Q1 2026 launch products as poor performers                                                      | Visual review — LLM ignored business context about new launches                | Added `FORBIDDEN` block excluding Bioactive Blend from dead stock section; added `test_live_llm_bioactive_not_dead_stock` eval   |
+| **Empty poor_performers hallucination** | When no SKUs met dead stock criteria (negative MoM + high cover), LLM invented one to fulfill the prompt's command | Local run produced zero valid poor performers, LLM picked a healthy SKU anyway | Restructured prompt with explicit IF/ELSE branching on empty list; added `test_live_llm_dead_stock_is_valid_poor_performer` eval |
+| **Wrong air freight pick**              | LLM selected a lower-revenue at-risk SKU instead of the highest                                                    | Compared LLM output to Pandas `skus_at_risk` sorted by Revenue_M4              | Replaced prose instruction with algorithmic steps (sort → pick highest); existing air freight eval already covered this          |
+| **Missing MoM trends**                  | Rubric requires "trend across prior months" but LLM omitted growth percentages                                     | Checked output against submission guidelines                                   | Added per-SKU MoM requirement; added `test_live_llm_performers_include_mom_trend` eval                                           |
+| **Reorder for healthy stock**           | Pandas recommended 414 units for a SKU with effective cover above target (not at risk)                             | Reviewed PO CSV download — contradicted dashboard's own risk assessment        | Fixed `sop_engine.py` to zero out `Suggested_Reorder_Qty` when `Is_At_Risk == False`                                             |
+
+The pattern: run locally, compare LLM output against Pandas ground truth, identify the gap, harden the prompt AND add an eval to prevent regression. Each bug became a new integration test so it can never recur silently.
 
 ## API Endpoints
 

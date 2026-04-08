@@ -106,14 +106,15 @@ def calculate(df: pd.DataFrame) -> pd.DataFrame:
         out["Effective_Months_Cover"] < out["Target_Months_Cover"]
     ) & ~stagnant_mask
 
-    # D. Reorder quantities
+    # D. Reorder quantities — only for at-risk SKUs.
+    # SKUs with sufficient effective cover (Is_At_Risk == False) should not
+    # generate purchase orders; reordering healthy stock wastes cash flow.
     out["Total_Pipeline_Needed"] = (
         out["Target_Months_Cover"] + out["Order_Arrival_Months"]
     ) * out["Projected_M5_Sales"]
     current_pipeline = out["Stock_On_Hand"] + out["Units_On_Order"]
-    out["Suggested_Reorder_Qty"] = (
-        (out["Total_Pipeline_Needed"] - current_pipeline).clip(lower=0).astype(int)
-    )
+    raw_reorder = (out["Total_Pipeline_Needed"] - current_pipeline).clip(lower=0)
+    out["Suggested_Reorder_Qty"] = raw_reorder.where(out["Is_At_Risk"], 0).astype(int)
 
     return out
 
