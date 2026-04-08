@@ -1,4 +1,4 @@
-.PHONY: test test-integration test-eval lint pre-commit pre-commit-install reqs docker-build up
+.PHONY: test test-integration test-eval lint pre-commit pre-commit-install reqs docker-build up push-prompt
 
 test:
 	cd backend && uv run pytest tests/ --cov=. --cov-report=term-missing --cov-fail-under=70
@@ -30,3 +30,6 @@ docker-build: reqs
 
 up:
 	docker compose up
+
+push-prompt:
+	cd backend && uv run python ../scripts/push_prompt.py $(ARGS)

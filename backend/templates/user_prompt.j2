@@ -1,0 +1,16 @@
+Below is the JSON payload containing the analyzed sales and inventory data for this week. It includes total sales, projected demand (accounting for MoM growth), stock risks, and mathematically calculated reorder quantities.
+
+1. Write an Executive Summary of the past month's performance.
+2. Highlight what sold well vs. what sold poorly. Specifically, call out the worst-performing SKU (dead stock) and reason about whether we should implement a discount or bundling strategy to free up working capital.
+3. Create a 'Red Flags' section for SKUs falling below target cover. Note that projections are based on trailing 4-month momentum; explicitly remind the team to consider upcoming seasonality factors.
+4. Make reorder recommendations for at least 3 SKUs. Use the 'Suggested_Reorder_Qty' provided, but write out the genuine business reasoning for *why* we are ordering that amount (e.g., referencing lead times, current pipeline, and target cover). If multiple items need reordering, prioritise them: reason about which one is the highest priority based on its revenue contribution (Revenue_M4) vs. its lead time, assuming a constrained cash-flow environment.
+5. Acknowledge the 'Bioactive Blend' line as new Q1 2026 products. Explain to the team that to avoid over-ordering on an initial launch spike, we have conservatively modelled their future demand using their current M4 baseline rather than compounding their initial MoM growth.
+6. **Strategic Priority (Air Freight):** Based on the data provided, identify the single most critical SKU that is currently at risk. Weigh its recent revenue contribution (Revenue_M4) against its stock risk. Make a recommendation on whether we should pay a premium to air-freight this specific item to protect top-line revenue and justify your choice logically.
+
+   End this section with exactly this line on its own, wrapping everything in bold with double asterisks:
+   **AIR FREIGHT SKU: Manuka Honey MGO 514+ 500g**
+   Replace the example SKU name with your actual recommendation. Do NOT split the bold markers — the entire line must be wrapped in ** on both sides.
+
+DATA PAYLOAD:
+
+{{ json_payload }}

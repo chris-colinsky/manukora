@@ -8,6 +8,7 @@ dependencies = [
     "deepeval>=3.9.5",
     "fastapi>=0.135.3",
     "httpx>=0.28.1",
+    "jinja2>=3.1.6",
     "langfuse>=4.0.6",
     "openai>=2.30.0",
     "opentelemetry-api>=1.40.0",

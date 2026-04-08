@@ -31,7 +31,14 @@ _at_risk_by_revenue = _REAL_DF[_REAL_DF["Is_At_Risk"]].nlargest(
 ACCEPTABLE_AIR_FREIGHT_SKUS: set[str] = {str(s) for s in _at_risk_by_revenue["SKU"]}
 
 # Regex to extract the delimited air freight line from LLM markdown output.
-AIR_FREIGHT_PATTERN = re.compile(r"\*\*AIR FREIGHT SKU:\s*(.+?)\*\*", re.IGNORECASE)
+# Handles variations local models produce:
+#   **AIR FREIGHT SKU: Name**        (bold wrapping everything)
+#   **AIR FREIGHT SKU:** Name        (bold wrapping only the label)
+#   ### AIR FREIGHT SKU: Name        (markdown header)
+AIR_FREIGHT_PATTERN = re.compile(
+    r"(?:\*\*|#{1,4}\s*)AIR FREIGHT SKU:\s*\**\s*(.+?)(?:\*\*|\s*$)",
+    re.IGNORECASE,
+)
 
 
 def extract_air_freight_sku(markdown: str) -> str:

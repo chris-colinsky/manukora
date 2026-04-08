@@ -14,38 +14,16 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 import config
 import telemetry
+from prompts import load_system_prompt, load_user_prompt
 
 logger = structlog.get_logger(__name__)
 
-SYSTEM_PROMPT = (
-    "You are an expert Supply Chain & S&OP Director for a highly successful DTC honey brand. "
-    "Your task is to review the weekly pre-calculated inventory data and write a concise, "
-    "highly actionable S&OP briefing for the executive team. The briefing must take under "
-    "5 minutes to read. Use a professional, data-driven, yet accessible tone. "
-    "Use Markdown formatting for readability."
-)
 
-USER_PROMPT_TEMPLATE = """Below is the JSON payload containing the analyzed sales and inventory data for this week. It includes total sales, projected demand (accounting for MoM growth), stock risks, and mathematically calculated reorder quantities.
-
-1. Write an Executive Summary of the past month's performance.
-2. Highlight what sold well vs. what sold poorly. Specifically, call out the worst-performing SKU (dead stock) and reason about whether we should implement a discount or bundling strategy to free up working capital.
-3. Create a 'Red Flags' section for SKUs falling below target cover. Note that projections are based on trailing 4-month momentum; explicitly remind the team to consider upcoming seasonality factors.
-4. Make reorder recommendations for at least 3 SKUs. Use the 'Suggested_Reorder_Qty' provided, but write out the genuine business reasoning for *why* we are ordering that amount (e.g., referencing lead times, current pipeline, and target cover). If multiple items need reordering, prioritise them: reason about which one is the highest priority based on its revenue contribution (Revenue_M4) vs. its lead time, assuming a constrained cash-flow environment.
-5. Acknowledge the 'Bioactive Blend' line as new Q1 2026 products. Explain to the team that to avoid over-ordering on an initial launch spike, we have conservatively modelled their future demand using their current M4 baseline rather than compounding their initial MoM growth.
-6. **Strategic Priority (Air Freight):** Based on the data provided, identify the single most critical SKU that is currently at risk. Weigh its recent revenue contribution (Revenue_M4) against its stock risk. Make a recommendation on whether we should pay a premium to air-freight this specific item to protect top-line revenue and justify your choice logically.
-
-   End this section with exactly this line (fill in the SKU name):
-   **AIR FREIGHT SKU: <full SKU name here>**
-
-DATA PAYLOAD:
-
-{json_payload_string}"""
-
-
-def _call_anthropic(user_prompt: str) -> tuple[str, dict[str, Any]]:
+def _call_anthropic(system_prompt: str, user_prompt: str) -> tuple[str, dict[str, Any]]:
     """Call the Anthropic API using the native SDK.
 
     Args:
+        system_prompt: The system prompt string.
         user_prompt: The fully-rendered user prompt string.
 
     Returns:
@@ -58,7 +36,7 @@ def _call_anthropic(user_prompt: str) -> tuple[str, dict[str, Any]]:
     response = client.messages.create(
         model="claude-sonnet-4-6",
         max_tokens=4096,
-        system=SYSTEM_PROMPT,
+        system=system_prompt,
         messages=[{"role": "user", "content": user_prompt}],
     )
     block = response.content[0]
@@ -70,10 +48,11 @@ def _call_anthropic(user_prompt: str) -> tuple[str, dict[str, Any]]:
     return text, usage
 
 
-def _call_local(user_prompt: str) -> tuple[str, dict[str, Any]]:
+def _call_local(system_prompt: str, user_prompt: str) -> tuple[str, dict[str, Any]]:
     """Call a local OpenAI-compatible endpoint (LM Studio / vLLM).
 
     Args:
+        system_prompt: The system prompt string.
         user_prompt: The fully-rendered user prompt string.
 
     Returns:
@@ -85,7 +64,7 @@ def _call_local(user_prompt: str) -> tuple[str, dict[str, Any]]:
     response = client.chat.completions.create(
         model=config.LOCAL_LLM_MODEL,
         messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
         max_tokens=4096,
@@ -104,25 +83,28 @@ def _call_local(user_prompt: str) -> tuple[str, dict[str, Any]]:
     stop=stop_after_attempt(3),
     reraise=True,
 )
-def _call_llm_with_retry(user_prompt: str) -> tuple[str, dict[str, Any]]:
+def _call_llm_with_retry(
+    system_prompt: str, user_prompt: str
+) -> tuple[str, dict[str, Any]]:
     """Invoke the appropriate LLM backend with exponential-backoff retry.
 
     Args:
+        system_prompt: The system prompt string.
         user_prompt: The fully-rendered user prompt string.
 
     Returns:
         A tuple of (response_text, usage_dict).
     """
     if config.ENV == "production":
-        return _call_anthropic(user_prompt)
-    return _call_local(user_prompt)
+        return _call_anthropic(system_prompt, user_prompt)
+    return _call_local(system_prompt, user_prompt)
 
 
 def generate_briefing(payload: dict) -> str:
     """Generate the executive S&OP briefing from a pre-calculated JSON payload.
 
-    Wraps the LLM call with Langfuse tracing (when configured) and
-    OpenTelemetry spans.
+    Loads prompts from Langfuse (with local Jinja2 fallback), wraps the LLM
+    call with Langfuse tracing and OpenTelemetry spans.
 
     Args:
         payload: The output of sop_engine.build_llm_payload().
@@ -133,26 +115,48 @@ def generate_briefing(payload: dict) -> str:
     tracer = telemetry.get_tracer()
     langfuse = telemetry.get_langfuse()
 
+    # Load prompts (Langfuse-first, local fallback)
+    system_result = load_system_prompt(langfuse_client=langfuse)
     json_payload_string = json.dumps(payload, indent=2, default=str)
-    user_prompt = USER_PROMPT_TEMPLATE.format(json_payload_string=json_payload_string)
+    user_result = load_user_prompt(
+        langfuse_client=langfuse, json_payload=json_payload_string
+    )
 
     generation = None
+    model_name = (
+        "claude-sonnet-4-6" if config.ENV == "production" else config.LOCAL_LLM_MODEL
+    )
+
     if langfuse:
-        generation = langfuse.start_observation(
-            name="sop-llm-call",
-            as_type="generation",
-            model=(
-                "claude-sonnet-4-6"
-                if config.ENV == "production"
-                else config.LOCAL_LLM_MODEL
-            ),
-            input={"system": SYSTEM_PROMPT, "user": user_prompt},
-        )
+        gen_kwargs: dict[str, Any] = {
+            "name": "sop-llm-call",
+            "as_type": "generation",
+            "model": model_name,
+            "input": {"system": system_result.text, "user": user_result.text},
+            "metadata": {
+                "env": config.ENV,
+                "system_prompt_source": (
+                    "langfuse" if system_result.langfuse_prompt else "local"
+                ),
+                "user_prompt_source": (
+                    "langfuse" if user_result.langfuse_prompt else "local"
+                ),
+            },
+        }
+        # Link the prompt version that drives this generation.
+        # Langfuse accepts one prompt per observation — use the user prompt
+        # (which contains the data payload) as the primary link, since it
+        # varies per call.  The system prompt is linked via metadata.
+        if user_result.langfuse_prompt is not None:
+            gen_kwargs["prompt"] = user_result.langfuse_prompt
+        elif system_result.langfuse_prompt is not None:
+            gen_kwargs["prompt"] = system_result.langfuse_prompt
+        generation = langfuse.start_observation(**gen_kwargs)
 
     start_time = time.monotonic()
 
     with tracer.start_as_current_span("llm.generate_briefing"):
-        text, usage = _call_llm_with_retry(user_prompt)
+        text, usage = _call_llm_with_retry(system_result.text, user_result.text)
 
     elapsed = time.monotonic() - start_time
 
