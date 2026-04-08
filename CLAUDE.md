@@ -90,3 +90,10 @@ Use `starlette.config.Config` in `backend/config.py`. Required env vars:
 
 ## Deployment (Fly.io)
 Two separate Fly apps: `cd backend && fly launch`, then `cd frontend && fly launch` with `BACKEND_URL` pointing to the backend app.
+
+## HyperDX
+
+- HYPERDX_MODE: local
+- OTEL_SERVICE_NAME: sop
+- HYPERDX_LOCAL_API_KEY: non-empty-token
+- HYPERDX_CONTAINER: hyperdx
