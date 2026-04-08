@@ -25,7 +25,7 @@ def fetch_sop_data() -> dict | None:
     Returns:
         Parsed JSON response dict, or None if the request fails.
     """
-    response = requests.get(GENERATE_SOP_URL, timeout=120)
+    response = requests.get(GENERATE_SOP_URL, timeout=300)
     response.raise_for_status()
     return response.json()
 
@@ -47,10 +47,21 @@ def main() -> None:
         page_title="Manukora S&OP Dashboard",
         page_icon="🍯",
         layout="wide",
+        menu_items={"Get help": None, "Report a bug": None, "About": None},
+    )
+    st.markdown(
+        "<style>"
+        "[data-testid='stDeployButton'], "
+        "[data-testid='stAppDeployButton'], "
+        ".stDeployButton, "
+        "button[kind='header'] "
+        "{display: none !important;}"
+        "</style>",
+        unsafe_allow_html=True,
     )
 
     st.title("🍯 Manukora — Weekly S&OP Briefing")
-    st.caption("AI-powered Sales & Operations Planning · Powered by Claude")
+    st.caption("AI-powered Sales & Operations Planning")
 
     with st.spinner("Analyzing omnichannel data and generating S&OP insights..."):
         try:
