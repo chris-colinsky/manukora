@@ -90,12 +90,12 @@ make pre-commit       # install and run pre-commit hooks
 
 The project has three tiers of tests:
 
-| Suite        | File                 | Tests                  | What it validates                                                                                          |
-|--------------|----------------------|------------------------|------------------------------------------------------------------------------------------------------------|
-| **Unit**     | `test_sop_engine.py` | 23                     | Every supply chain formula, edge cases (division by zero, Bioactive Blend exception), reorder calculations |
-| **API**      | `test_api.py`        | 10                     | FastAPI endpoints via TestClient, error handling, CSV download format                                      |
-| **LLM Eval** | `test_evals.py`      | 8 unit + 2 integration | Air freight extraction, ground truth validation, live LLM smoke tests                                      |
-| **deepeval** | `run_evals.py`       | 3 metrics              | Air freight correctness, briefing completeness, faithfulness (Claude Opus as judge)                        |
+| Suite        | File                 | Tests                  | What it validates                                                                                                   |
+|--------------|----------------------|------------------------|---------------------------------------------------------------------------------------------------------------------|
+| **Unit**     | `test_sop_engine.py` | 23                     | Every supply chain formula, edge cases (division by zero, Bioactive Blend exception), reorder calculations          |
+| **API**      | `test_api.py`        | 10                     | FastAPI endpoints via TestClient, error handling, CSV download format                                               |
+| **LLM Eval** | `test_evals.py`      | 8 unit + 5 integration | Air freight extraction, ground truth validation, red flags integrity, Bioactive Blend exclusion, MoM trend presence |
+| **deepeval** | `run_evals.py`       | 3 metrics              | Air freight correctness, briefing completeness, faithfulness (Claude Opus as judge)                                 |
 
 ### Running Unit & API Tests (no LLM required)
 
