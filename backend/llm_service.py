@@ -139,16 +139,17 @@ def generate_briefing(payload: dict) -> str:
     )
 
     if langfuse:
-        # Link system prompt as its own observation so Langfuse tracks
+        # Link system prompt as its own generation so Langfuse tracks
         # observation counts for both prompts independently.
         if system_result.langfuse_prompt is not None:
-            sys_span = langfuse.start_observation(
+            sys_gen = langfuse.start_observation(
                 name="system-prompt",
-                as_type="span",
+                as_type="generation",
                 input=system_result.text,
+                output=system_result.text,
                 prompt=system_result.langfuse_prompt,
             )
-            sys_span.end()
+            sys_gen.end()
 
         gen_kwargs: dict[str, Any] = {
             "name": "sop-llm-call",
