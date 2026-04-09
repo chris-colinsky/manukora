@@ -182,7 +182,7 @@ The OpenAI Python SDK configured with `base_url=http://localhost:1234/v1` to poi
 
 ### Prompt Engineering
 
-**Where:** `llm_service.py` (`SYSTEM_PROMPT`, `USER_PROMPT_TEMPLATE`)
+**Where:** `templates/system_prompt.j2`, `templates/user_prompt.j2`, `prompts.py`
 
 The prompts are carefully structured to produce consistent, evaluable output:
 
