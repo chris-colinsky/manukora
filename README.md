@@ -9,16 +9,16 @@ An AI-powered weekly S&OP briefing system for the Manukora DTC brand. A FastAPI 
 
 ## Live Demo & Key Documents
 
-| Resource                               | Link                                                                                                                                                          |
-|----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Live Dashboard**                     | [manukora-frontend.fly.dev](https://manukora-frontend.fly.dev)                                                                                                |
-| **Backend API (Swagger)**              | [manukora-backend.fly.dev/docs](https://manukora-backend.fly.dev/docs)                                                                                        |
-| **Part 2: Morning Intelligence Brief** | [`_docs/part-2-morning-brief.md`](_docs/part-2-morning-brief.md)                                                                                              |
-| **Learning Concepts**                  | [`_docs/learning_concepts.md`](_docs/learning_concepts.md) — reference guide explaining every technology, pattern, and architectural decision in this project |
+| Resource                               | Link                                                                                                                                                           |
+|----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Live Dashboard**                     | [manukora-frontend.fly.dev](https://manukora-frontend.fly.dev)                                                                                                 |
+| **Backend API (Swagger)**              | [manukora-backend.fly.dev/docs](https://manukora-backend.fly.dev/docs)                                                                                         |
+| **Part 2: Morning Intelligence Brief** | [`_docs/part-2-morning-brief.md`](_docs/part-2-morning-brief.md)                                                                                               |
+| **Learning Concepts**                  | [`_docs/learning_concepts.md`](_docs/learning_concepts.md) — reference guide explaining every technology, pattern, and architectural decision in this project  |
 | **Architecture Decision Record**       | [`_docs/adr/0001-calculate-first-reason-second.md`](_docs/adr/0001-calculate-first-reason-second.md) — why all math is done in Pandas before the LLM is called |
-| **Architecture Diagram**               | [`_docs/architecture.mmd`](_docs/architecture.mmd) — Mermaid.js diagram of the full data flow |
-| **Eval Results (Production)**          | [`_docs/production-eval-results.txt`](_docs/production-eval-results.txt) — deepeval scores from Claude Sonnet |
-| **Eval Results (Local)**               | [`_docs/local-eval-results.txt`](_docs/local-eval-results.txt) — deepeval scores from Mistral Small 3 |
+| **Architecture Diagram**               | [`_docs/architecture.mmd`](_docs/architecture.mmd) — Mermaid.js diagram of the full data flow                                                                  |
+| **Eval Results (Production)**          | [`_docs/production-eval-results.txt`](_docs/production-eval-results.txt) — deepeval scores from Claude Sonnet                                                  |
+| **Eval Results (Local)**               | [`_docs/local-eval-results.txt`](_docs/local-eval-results.txt) — deepeval scores from Mistral Small 3                                                          |
 
 ## How I Built This (AI-Assisted Development)
 
@@ -245,6 +245,9 @@ All application logs are emitted as structured JSON via [Structlog](https://www.
 [OpenTelemetry](https://opentelemetry.io/) traces and logs are exported via OTLP/HTTP to [HyperDX](https://www.hyperdx.io/) for unified infrastructure observability. Traces cover the full request lifecycle — from API hit through Pandas calculation to LLM response. Configuration is environment-driven:
 - **Local:** OTLP exports to self-hosted HyperDX on `localhost:4318`
 - **Production:** OTLP exports to HyperDX cloud via `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEADERS` secrets
+
+![HyperDX production logs](_docs/hyperdx-prod.png)
+*Structured JSON logs from the production backend flowing into HyperDX cloud, showing LLM call events, token counts, and latency.*
 
 ### LLM Observability (Langfuse)
 [Langfuse](https://langfuse.com/) wraps every LLM call with dedicated AI observability: prompt inputs, model outputs, latency, and token consumption. It also manages prompt versioning - prompts are stored as Jinja2 templates locally and published to Langfuse for A/B testing and version tracking.

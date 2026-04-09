@@ -95,17 +95,28 @@ def setup_tracing() -> None:
     _tracer_provider = TracerProvider(resource=resource)
 
     if config.OTEL_EXPORTER_OTLP_ENDPOINT:
-        # Let the OTLP SDK read OTEL_EXPORTER_OTLP_ENDPOINT and
-        # OTEL_EXPORTER_OTLP_HEADERS from the environment natively.
-        # No need to parse or pass them explicitly.
+        # Parse OTEL_EXPORTER_OTLP_HEADERS (standard format: "key=value,key2=value2")
+        headers: dict[str, str] = {}
+        raw_headers = config.OTEL_EXPORTER_OTLP_HEADERS
+        if raw_headers:
+            for pair in raw_headers.split(","):
+                if "=" in pair:
+                    k, _, v = pair.strip().partition("=")
+                    headers[k.strip()] = v.strip()
 
         # --- Traces ---
-        span_exporter = OTLPSpanExporter()
+        span_exporter = OTLPSpanExporter(
+            endpoint=f"{config.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces",
+            headers=headers,
+        )
         _tracer_provider.add_span_processor(BatchSpanProcessor(span_exporter))
 
         # --- Logs ---
         _logger_provider = LoggerProvider(resource=resource)
-        log_exporter = OTLPLogExporter()
+        log_exporter = OTLPLogExporter(
+            endpoint=f"{config.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/logs",
+            headers=headers,
+        )
         _logger_provider.add_log_record_processor(BatchLogRecordProcessor(log_exporter))
 
         # Attach OTEL handler to the root logger so structlog events
