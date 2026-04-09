@@ -10,8 +10,8 @@ services:
       LOCAL_LLM_BASE_URL: ${LOCAL_LLM_BASE_URL:-http://host.docker.internal:1234/v1}
       LOCAL_LLM_MODEL: ${LOCAL_LLM_MODEL:-local-model}
       # HyperDX — OTLP ingestion on :4318 (UI is :8080); backend connects via host gateway
-      HYPERDX_API_KEY: ${HYPERDX_API_KEY:-}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://host.docker.internal:4318}
+      OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS:-}
       # Langfuse — already running locally on :3000; backend connects via host gateway
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-publickey-local}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-secretkey-local}

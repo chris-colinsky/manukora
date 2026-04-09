@@ -94,21 +94,25 @@ def push_prompt(
     print(f"  Pushed '{prompt_name}' v{version} with labels {labels}")
 
 
-def _load_dotenv() -> None:
-    """Load backend/.env into os.environ so Langfuse SDK can read credentials."""
-    env_path = BACKEND_DIR / ".env"
+def _load_dotenv(env_file: str = ".env") -> None:
+    """Load an env file into os.environ so Langfuse SDK can read credentials.
+
+    Args:
+        env_file: Filename relative to the backend directory (e.g. '.env', '..env.production').
+    """
+    env_path = BACKEND_DIR / env_file
     if env_path.exists():
         for line in env_path.read_text().splitlines():
             line = line.strip()
             if line and not line.startswith("#") and "=" in line:
                 key, _, value = line.partition("=")
                 os.environ.setdefault(key.strip(), value.strip())
+    else:
+        print(f"Warning: {env_path} not found")
 
 
 def main() -> None:
     """Parse arguments and push prompts to Langfuse."""
-    _load_dotenv()
-
     parser = argparse.ArgumentParser(description="Push prompts to Langfuse")
     parser.add_argument(
         "--prompt",
@@ -125,7 +129,14 @@ def main() -> None:
         "--message",
         help="Commit message for the prompt version",
     )
+    parser.add_argument(
+        "--env-file",
+        default=".env",
+        help="Env file to load from backend/ (default: .env, use ..env.production for cloud)",
+    )
     args = parser.parse_args()
+
+    _load_dotenv(args.env_file)
 
     configs = load_prompt_configs()
     client = Langfuse()

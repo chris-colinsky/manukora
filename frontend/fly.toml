@@ -1,26 +1,33 @@
-app = "honey-frontend"
-primary_region = "sjc"
+# fly.toml app configuration file generated for manukora-frontend on 2026-04-08T18:56:56-07:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'manukora-frontend'
+primary_region = 'lax'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [env]
-  BACKEND_URL = "https://honey-backend.fly.dev"
+  BACKEND_URL = 'https://manukora-backend.fly.dev'
 
 [http_service]
   internal_port = 8501
   force_https = true
-  auto_stop_machines = true
+  auto_stop_machines = 'stop'
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
 
   [[http_service.checks]]
-    grace_period = "15s"
-    interval = "30s"
-    method = "GET"
-    path = "/_stcore/health"
-    timeout = "5s"
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '15s'
+    method = 'GET'
+    path = '/_stcore/health'
 
 [[vm]]
-  size = "shared-cpu-1x"
-  memory = "512mb"
+  size = 'shared-cpu-1x'
+  memory = '512mb'
+  cpus = 1
+  memory_mb = 512

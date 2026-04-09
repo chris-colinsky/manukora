@@ -95,23 +95,17 @@ def setup_tracing() -> None:
     _tracer_provider = TracerProvider(resource=resource)
 
     if config.OTEL_EXPORTER_OTLP_ENDPOINT:
-        headers: dict[str, str] = {}
-        if config.HYPERDX_API_KEY:
-            headers["authorization"] = config.HYPERDX_API_KEY
+        # Let the OTLP SDK read OTEL_EXPORTER_OTLP_ENDPOINT and
+        # OTEL_EXPORTER_OTLP_HEADERS from the environment natively.
+        # No need to parse or pass them explicitly.
 
         # --- Traces ---
-        span_exporter = OTLPSpanExporter(
-            endpoint=f"{config.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces",
-            headers=headers,
-        )
+        span_exporter = OTLPSpanExporter()
         _tracer_provider.add_span_processor(BatchSpanProcessor(span_exporter))
 
         # --- Logs ---
         _logger_provider = LoggerProvider(resource=resource)
-        log_exporter = OTLPLogExporter(
-            endpoint=f"{config.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/logs",
-            headers=headers,
-        )
+        log_exporter = OTLPLogExporter()
         _logger_provider.add_log_record_processor(BatchLogRecordProcessor(log_exporter))
 
         # Attach OTEL handler to the root logger so structlog events

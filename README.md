@@ -5,7 +5,25 @@
 [![Frontend Coverage](https://img.shields.io/badge/frontend%20coverage-95%25-brightgreen)](https://github.com/chris-colinsky/manukora)
 [![Python](https://img.shields.io/badge/python-3.12-blue)](https://python.org)
 
-An AI-powered weekly S&OP briefing system for a DTC honey brand. A FastAPI backend runs all supply chain maths deterministically in Pandas, then passes verified data to Claude for executive narrative. A Streamlit frontend autoloads the briefing — no clicks required.
+An AI-powered weekly S&OP briefing system for the Manukora DTC brand. A FastAPI backend runs all supply chain maths deterministically in Pandas, then passes verified data to Claude for executive narrative. A Streamlit frontend autoloads the briefing — no clicks required.
+
+## Table of Contents
+
+- [Architecture](#architecture)
+- [Local Development (uv)](#local-development-uv)
+- [Local Development (Docker Compose)](#local-development-docker-compose)
+- [Testing](#testing)
+  - [Quick Start](#quick-start)
+  - [Test Suites](#test-suites)
+  - [Running Unit & API Tests](#running-unit--api-tests-no-llm-required)
+  - [Running LLM Integration Tests](#running-llm-integration-tests)
+  - [deepeval LLM Evaluation](#deepeval-llm-evaluation-claude-opus-as-judge)
+  - [Evaluation Scorecard](#evaluation-scorecard)
+  - [Local LLM Testing as a Prompt Hardening Strategy](#local-llm-testing-as-a-prompt-hardening-strategy)
+- [API Endpoints](#api-endpoints)
+- [Environment Variables](#environment-variables)
+- [Deployment (Fly.io)](#deployment-flyio)
+- [Project Structure](#project-structure)
 
 ## Architecture
 
@@ -220,9 +238,9 @@ cp .env.example frontend/.env
 | `ANTHROPIC_API_KEY`           | Production only | —                          | Anthropic API key for Claude                                                   |
 | `LOCAL_LLM_BASE_URL`          | Local only      | `http://localhost:1234/v1` | LM Studio or vLLM base URL                                                     |
 | `LOCAL_LLM_MODEL`             | Local only      | `local-model`              | Model name for local inference                                                 |
-| `HYPERDX_API_KEY`             | No              | —                          | HyperDX API key (used as `Authorization` header; omit for local self-hosted)   |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | No              | —                          | OTLP endpoint — HyperDX OTLP ingestion port is `4318` (not the UI port `8080`) |
-| `OTEL_SERVICE_NAME`           | No              | `honey-backend`            | Service name in traces                                                         |
+| `OTEL_EXPORTER_OTLP_HEADERS`  | No              | —                          | OTLP auth headers (e.g., `authorization=Bearer <key>`; omit for local)         |
+| `OTEL_SERVICE_NAME`           | No              | `manukora-backend`         | Service name in traces                                                         |
 | `LANGFUSE_PUBLIC_KEY`         | No              | —                          | Langfuse project public key                                                    |
 | `LANGFUSE_SECRET_KEY`         | No              | —                          | Langfuse project secret key                                                    |
 | `LANGFUSE_HOST`               | No              | `http://localhost:3000`    | Langfuse host URL                                                              |
@@ -235,25 +253,72 @@ cp .env.example frontend/.env
 
 ## Deployment (Fly.io)
 
-```bash
-# Deploy backend
-cd backend
-fly launch --name honey-backend
-fly secrets set ANTHROPIC_API_KEY=sk-ant-... ENV=production \
-  LANGFUSE_PUBLIC_KEY=... LANGFUSE_SECRET_KEY=... LANGFUSE_HOST=...
-fly deploy
+### Prerequisites
 
-# Deploy frontend
-cd frontend
-fly launch --name honey-frontend
-fly secrets set BACKEND_URL=https://honey-backend.fly.dev
+```bash
+brew install flyctl
+fly auth login
+```
+
+### 1. Generate requirements.txt files
+
+Both Dockerfiles install from `requirements.txt`, so export them first:
+
+```bash
+make reqs
+```
+
+### 2. Deploy backend
+
+```bash
+cd backend
+fly launch --name manukora-backend
+```
+
+Set all production secrets (these are stored encrypted by Fly — never committed to the repo):
+
+```bash
+fly secrets set \
+  ENV=production \
+  ANTHROPIC_API_KEY=sk-ant-... \
+  LANGFUSE_PUBLIC_KEY=pk-lf-... \
+  LANGFUSE_SECRET_KEY=sk-lf-... \
+  LANGFUSE_HOST=https://cloud.langfuse.com \
+  OTEL_EXPORTER_OTLP_ENDPOINT=https://in-otel.hyperdx.io \
+  OTEL_EXPORTER_OTLP_HEADERS="authorization=Bearer <HYPERDX_API_KEY>"
+```
+
+Deploy:
+
+```bash
 fly deploy
+```
+
+Verify: `https://manukora-backend.fly.dev/docs`
+
+### 3. Deploy frontend
+
+```bash
+cd frontend
+fly launch --name manukora-frontend
+fly secrets set BACKEND_URL=https://manukora-backend.fly.dev
+fly deploy
+```
+
+Verify: `https://manukora-frontend.fly.dev`
+
+### 4. Push prompts to cloud Langfuse
+
+Once the Langfuse cloud project is created and secrets are set locally in `backend/.env`:
+
+```bash
+make push-prompt ARGS="-m 'Initial production deployment'"
 ```
 
 ## Project Structure
 
 ```
-honey/
+manukora/
 ├── .env.example                # Template — copy to backend/.env and frontend/.env
 ├── backend/                    # FastAPI microservice
 │   ├── .env                    # ← NOT committed; copy from root .env.example

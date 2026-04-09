@@ -1,7 +1,7 @@
 [project]
 name = "backend"
 version = "0.1.0"
-description = "Add your description here"
+description = "FastAPI backend for Manukora S&OP Intelligence — Pandas calculation engine + LLM briefing generation"
 requires-python = ">=3.12"
 dependencies = [
     "anthropic>=0.89.0",

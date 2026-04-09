@@ -10,6 +10,7 @@ build/
 
 # Environment
 backend/.env
+backend/.env.production
 frontend/.env
 
 # Testing

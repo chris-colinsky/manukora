@@ -16,8 +16,8 @@ LOCAL_LLM_BASE_URL: str = config(
 LOCAL_LLM_MODEL: str = config("LOCAL_LLM_MODEL", default="local-model")
 
 # OpenTelemetry / HyperDX
-HYPERDX_API_KEY: str = config("HYPERDX_API_KEY", default="")
 OTEL_EXPORTER_OTLP_ENDPOINT: str = config("OTEL_EXPORTER_OTLP_ENDPOINT", default="")
+OTEL_EXPORTER_OTLP_HEADERS: str = config("OTEL_EXPORTER_OTLP_HEADERS", default="")
 OTEL_SERVICE_NAME: str = config("OTEL_SERVICE_NAME", default="honey-backend")
 
 # Langfuse

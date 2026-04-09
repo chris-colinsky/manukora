@@ -64,6 +64,11 @@ def create_app() -> FastAPI:
 
     application.include_router(_build_router())
 
+    @application.get("/health", include_in_schema=False)
+    def healthz() -> dict[str, str]:
+        """Lightweight health check for Fly.io machine keep-alive."""
+        return {"status": "ok"}
+
     return application
 
 
