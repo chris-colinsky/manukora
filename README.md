@@ -247,7 +247,10 @@ All application logs are emitted as structured JSON via [Structlog](https://www.
 - **Production:** OTLP exports to HyperDX cloud via `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEADERS` secrets
 
 ### LLM Observability (Langfuse)
-[Langfuse](https://langfuse.com/) wraps every LLM call with dedicated AI observability: prompt inputs, model outputs, latency, and token consumption. It also manages prompt versioning — prompts are stored as Jinja2 templates locally and published to Langfuse for A/B testing and version tracking.
+[Langfuse](https://langfuse.com/) wraps every LLM call with dedicated AI observability: prompt inputs, model outputs, latency, and token consumption. It also manages prompt versioning - prompts are stored as Jinja2 templates locally and published to Langfuse for A/B testing and version tracking.
+
+![Langfuse production traces](_docs/langfuse-prod.png)
+*Production traces showing both system-prompt and sop-llm-call observations with token counts, latency, and cost per call.*
 
 ```bash
 # Push prompt templates to Langfuse (local)
