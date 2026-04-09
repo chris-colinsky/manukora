@@ -7,6 +7,49 @@
 
 An AI-powered weekly S&OP briefing system for the Manukora DTC brand. A FastAPI backend runs all supply chain maths deterministically in Pandas, then passes verified data to Claude for executive narrative. A Streamlit frontend autoloads the briefing — no clicks required.
 
+## Live Demo & Key Documents
+
+| Resource                               | Link                                                                                                                                                          |
+|----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Live Dashboard**                     | [manukora-frontend.fly.dev](https://manukora-frontend.fly.dev)                                                                                                |
+| **Backend API (Swagger)**              | [manukora-backend.fly.dev/docs](https://manukora-backend.fly.dev/docs)                                                                                        |
+| **Part 2: Morning Intelligence Brief** | [`_docs/part-2-morning-brief.md`](_docs/part-2-morning-brief.md)                                                                                              |
+| **Learning Concepts**                  | [`_docs/learning_concepts.md`](_docs/learning_concepts.md) — reference guide explaining every technology, pattern, and architectural decision in this project |
+| **Architecture Decision Record**       | [`_docs/adr/0001-calculate-first-reason-second.md`](_docs/adr/0001-calculate-first-reason-second.md) — why all math is done in Pandas before the LLM is called |
+| **Architecture Diagram**               | [`_docs/architecture.mmd`](_docs/architecture.mmd) — Mermaid.js diagram of the full data flow |
+| **Eval Results (Production)**          | [`_docs/production-eval-results.txt`](_docs/production-eval-results.txt) — deepeval scores from Claude Sonnet |
+| **Eval Results (Local)**               | [`_docs/local-eval-results.txt`](_docs/local-eval-results.txt) — deepeval scores from Mistral Small 3 |
+
+## How I Built This (AI-Assisted Development)
+
+> *"We expect you to use AI in your work. How you use it is part of what we're evaluating."*
+
+This project was built end-to-end using AI as a force multiplier across every phase. Here's the actual process:
+
+### 1. Strategy & PRD
+Used **Gemini Pro 3.1** to draft the overall business strategy and product requirements document. The goal was to translate the submission brief into a comprehensive technical spec before touching any code.
+
+### 2. Requirements Specification
+Translated the PRD into a detailed technical requirements file ([`_reqs/submission-strategy-part-1.md`](_reqs/submission-strategy-part-1.md)) with explicit supply chain formulas, data schemas, API contracts, and acceptance criteria. This file became the single source of truth for the entire build.
+
+### 3. Structured Planning with Claude Code
+Used a custom **`/feature-planning` skill** — a Claude Code slash command I built that enforces a 3-gate human-approval workflow before any code is written:
+
+- **Gate 1 (Clarify):** Claude reads the requirements file and appends clarifying questions directly into the file. I answer them in the file, then reply "answered." This forces ambiguity resolution before design begins.
+- **Gate 2 (Plan):** Claude writes a full implementation plan to [`_plans/submission-strategy-part-1-plan.md`](_plans/submission-strategy-part-1-plan.md). I review, request changes, and only reply "approved" when the plan is solid. No code is written until this gate passes.
+- **Gate 3 (Build):** Implementation begins phase-by-phase according to the approved plan.
+
+This workflow eliminates wasted implementation cycles. Claude doesn't guess at what to build — it builds exactly what was agreed.
+
+### 4. Iterative Backend Development
+Built the Pandas calculation engine, FastAPI endpoints, LLM service (factory pattern for local/production), schemas, and telemetry iteratively with Claude Code. Each component was tested before moving to the next.
+
+### 5. Prompt Hardening via Local LLM
+This was the most valuable AI-assisted step. I tested the prompt against **Mistral Small 3 (24B)** running locally via LM Studio. Smaller open-weight models are notoriously worse at following subtle instructions than Claude Sonnet — which makes them perfect for exposing prompt weaknesses. Every failure became a prompt fix AND a new eval test. Six issues caught and hardened (see [Prompt Hardening Strategy](#local-llm-testing-as-a-prompt-hardening-strategy) below for the full breakdown).
+
+### 6. Frontend & Deployment
+Built the Streamlit dashboard, tested both services via Docker Compose locally, then deployed to Fly.io. The entire infrastructure — from Dockerfiles to fly.toml configs to health checks — was pair-programmed with Claude Code.
+
 ## Table of Contents
 
 - [Architecture](#architecture)
@@ -20,6 +63,7 @@ An AI-powered weekly S&OP briefing system for the Manukora DTC brand. A FastAPI 
   - [deepeval LLM Evaluation](#deepeval-llm-evaluation-claude-opus-as-judge)
   - [Evaluation Scorecard](#evaluation-scorecard)
   - [Local LLM Testing as a Prompt Hardening Strategy](#local-llm-testing-as-a-prompt-hardening-strategy)
+- [Observability](#observability)
 - [API Endpoints](#api-endpoints)
 - [Environment Variables](#environment-variables)
 - [Deployment (Fly.io)](#deployment-flyio)
@@ -189,6 +233,31 @@ This approach caught several critical issues that the deepeval metrics alone mis
 | **Reorder for healthy stock**           | Pandas recommended 414 units for a SKU with effective cover above target (not at risk)                             | Reviewed PO CSV download — contradicted dashboard's own risk assessment        | Fixed `sop_engine.py` to zero out `Suggested_Reorder_Qty` when `Is_At_Risk == False`                                             |
 
 The pattern: run locally, compare LLM output against Pandas ground truth, identify the gap, harden the prompt AND add an eval to prevent regression. Each bug became a new integration test so it can never recur silently.
+
+## Observability
+
+The system has three layers of observability, each serving a different purpose:
+
+### Structured Logging (Structlog)
+All application logs are emitted as structured JSON via [Structlog](https://www.structlog.org/). Every log event includes timestamp, level, and contextual fields (e.g., `model`, `latency_seconds`, `input_tokens`). This makes logs machine-parseable and searchable — no regex required.
+
+### Infrastructure Tracing (OpenTelemetry + HyperDX)
+[OpenTelemetry](https://opentelemetry.io/) traces and logs are exported via OTLP/HTTP to [HyperDX](https://www.hyperdx.io/) for unified infrastructure observability. Traces cover the full request lifecycle — from API hit through Pandas calculation to LLM response. Configuration is environment-driven:
+- **Local:** OTLP exports to self-hosted HyperDX on `localhost:4318`
+- **Production:** OTLP exports to HyperDX cloud via `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEADERS` secrets
+
+### LLM Observability (Langfuse)
+[Langfuse](https://langfuse.com/) wraps every LLM call with dedicated AI observability: prompt inputs, model outputs, latency, and token consumption. It also manages prompt versioning — prompts are stored as Jinja2 templates locally and published to Langfuse for A/B testing and version tracking.
+
+```bash
+# Push prompt templates to Langfuse (local)
+make push-prompt ARGS="-m 'description'"
+
+# Push to cloud Langfuse
+make push-prompt ARGS="--env-file .env.production -m 'description'"
+```
+
+Key design decision: OTEL and Langfuse are intentionally kept separate. Setting a global OTEL tracer provider would cause Langfuse to emit its LLM spans through OTEL, duplicating data. Instead, the app uses an explicit (non-global) tracer provider for infrastructure spans, keeping the two pipelines independent.
 
 ## API Endpoints
 
