@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for manukora-backend on 2026-04-08T17:36:28-07:00
+# fly.toml app configuration file generated for backend
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'manukora-backend'
+app = 'backend'
 primary_region = 'lax'
 
 [build]
@@ -13,7 +13,7 @@ primary_region = 'lax'
   DATA_FILE_PATH = 'data/sales-data.csv'
   ENV = 'production'
   LANGFUSE_HOST = 'https://us.cloud.langfuse.com'
-  OTEL_SERVICE_NAME = 'manukora-backend'
+  OTEL_SERVICE_NAME = 'backend'
 
 [http_service]
   internal_port = 8000

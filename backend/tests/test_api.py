@@ -16,14 +16,14 @@ MOCK_SOP_RESPONSE = {
     "metrics": {"total_m4_revenue": 150000.0, "skus_at_risk": 3},
     "red_flag_data": [
         {
-            "SKU": "Manuka Honey MGO 263+ 500g",
+            "SKU": "Daily Wellness Tier 2 500g",
             "Effective_Months_Cover": 1.3,
             "Target_Months_Cover": 2,
             "Suggested_Reorder_Qty": 500,
             "Revenue_M4": 37513.84,
         }
     ],
-    "llm_briefing": "## Executive Summary\n\nTest briefing.\n\n**AIR FREIGHT SKU: Manuka Honey MGO 263+ 500g**",
+    "llm_briefing": "## Executive Summary\n\nTest briefing.\n\n**AIR FREIGHT SKU: Daily Wellness Tier 2 500g**",
 }
 
 
@@ -35,7 +35,7 @@ def mock_engine_and_llm():
     mock_df = pd.DataFrame(
         [
             {
-                "SKU": "Manuka Honey MGO 263+ 500g",
+                "SKU": "Daily Wellness Tier 2 500g",
                 "Total_M1": 556,
                 "Total_M2": 596,
                 "Total_M3": 628,
@@ -129,7 +129,7 @@ def test_download_pos_csv_contains_sku(mock_engine_and_llm) -> None:  # type: ig
     content = response.content.decode()
     assert "SKU" in content
     # The mock SKU has Suggested_Reorder_Qty > 0, so it must appear in the CSV.
-    assert "Manuka Honey MGO 263+ 500g" in content
+    assert "Daily Wellness Tier 2 500g" in content
 
 
 def test_download_pos_csv_not_found() -> None:

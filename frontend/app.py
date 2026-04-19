@@ -44,8 +44,8 @@ def fetch_po_csv() -> bytes:
 def main() -> None:
     """Render the Streamlit dashboard."""
     st.set_page_config(
-        page_title="Manukora S&OP Dashboard",
-        page_icon="🍯",
+        page_title="Terravita S&OP Dashboard",
+        page_icon="📊",
         layout="wide",
         menu_items={"Get help": None, "Report a bug": None, "About": None},
     )
@@ -60,7 +60,7 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
-    st.title("🍯 Manukora — Weekly S&OP Briefing")
+    st.title("📊 Terravita — Weekly S&OP Briefing")
     st.caption("AI-powered Sales & Operations Planning")
 
     with st.spinner("Analyzing omnichannel data and generating S&OP insights..."):

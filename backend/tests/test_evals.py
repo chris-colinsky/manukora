@@ -16,7 +16,7 @@ from unittest.mock import patch
 import pytest
 
 import sop_engine
-from sop_engine import BIOACTIVE_BLEND_KEYWORD
+from sop_engine import BIOSYNERGY_KEYWORD
 
 # Ground truth from the real sales CSV — computed once per session.
 _REAL_DF = sop_engine.calculate(sop_engine.load_and_validate("data/sales-data.csv"))
@@ -41,12 +41,10 @@ ALL_SKUS: set[str] = {str(s) for s in _REAL_DF["SKU"]}
 _poor_performers_df = sop_engine.get_poor_performers(_REAL_DF)
 POOR_PERFORMER_SKUS: set[str] = {str(s) for s in _poor_performers_df["SKU"]}
 
-# Ground truth: Bioactive Blend SKUs (must never be flagged as dead stock).
-BIOACTIVE_SKUS: set[str] = {
+# Ground truth: BioSynergy SKUs (must never be flagged as dead stock).
+BIOSYNERGY_SKUS: set[str] = {
     str(s)
-    for s in _REAL_DF[_REAL_DF["SKU"].str.contains(BIOACTIVE_BLEND_KEYWORD, na=False)][
-        "SKU"
-    ]
+    for s in _REAL_DF[_REAL_DF["SKU"].str.contains(BIOSYNERGY_KEYWORD, na=False)]["SKU"]
 }
 
 # Regex to extract the delimited air freight line from LLM markdown output.
@@ -87,9 +85,9 @@ def test_extraction_finds_delimited_sku() -> None:
         "Some analysis text.\n\n"
         "## Strategic Priority: Air Freight Recommendation\n\n"
         "This SKU is critical.\n\n"
-        "**AIR FREIGHT SKU: Manuka Honey MGO 263+ 500g**"
+        "**AIR FREIGHT SKU: Daily Wellness Tier 2 500g**"
     )
-    assert extract_air_freight_sku(sample) == "Manuka Honey MGO 263+ 500g"
+    assert extract_air_freight_sku(sample) == "Daily Wellness Tier 2 500g"
 
 
 def test_extraction_returns_empty_when_missing() -> None:
@@ -99,8 +97,8 @@ def test_extraction_returns_empty_when_missing() -> None:
 
 def test_extraction_case_insensitive() -> None:
     """Extraction must work regardless of delimiter casing."""
-    sample = "**air freight sku: Manuka Honey MGO 514+ 250g**"
-    assert extract_air_freight_sku(sample) == "Manuka Honey MGO 514+ 250g"
+    sample = "**air freight sku: Premium Supplement Tier 3 250g**"
+    assert extract_air_freight_sku(sample) == "Premium Supplement Tier 3 250g"
 
 
 # ---------------------------------------------------------------------------
@@ -177,7 +175,7 @@ def test_llm_air_freight_matches_ground_truth_mock() -> None:
 )
 def test_llm_wrong_air_freight_fails_eval() -> None:
     """Simulates a hallucinating LLM — the extracted SKU must not match ground truth."""
-    wrong_sku = "Propolis Tincture 30ml"
+    wrong_sku = "Energy Tincture 30ml"
     assert (
         wrong_sku != GROUND_TRUTH_AIR_FREIGHT_SKU
     ), "Choose a different 'wrong' SKU that isn't the actual ground truth"
@@ -287,7 +285,7 @@ def test_live_llm_red_flags_only_at_risk_skus(live_briefing: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Content eval: Bioactive Blend must not be flagged as dead stock
+# Content eval: BioSynergy must not be flagged as dead stock
 # ---------------------------------------------------------------------------
 
 # Pattern to find the poor performer / dead stock discussion.
@@ -298,33 +296,33 @@ _POOR_PERFORMER_SECTION = re.compile(
 
 
 @pytest.mark.integration
-def test_live_llm_bioactive_not_dead_stock(live_briefing: str) -> None:
-    """Bioactive Blend SKUs must not appear in the dead stock / poor performer section."""
+def test_live_llm_biosynergy_not_dead_stock(live_briefing: str) -> None:
+    """BioSynergy SKUs must not appear in the dead stock / poor performer section."""
     section_match = _POOR_PERFORMER_SECTION.search(live_briefing)
     if not section_match:
         # If there's no distinct section, search the full briefing for the
-        # combination of a Bioactive SKU name near dead-stock language.
-        for sku in BIOACTIVE_SKUS:
+        # combination of a BioSynergy SKU name near dead-stock language.
+        for sku in BIOSYNERGY_SKUS:
             pattern = re.compile(
                 rf"{re.escape(sku)}[^#]*?(?:dead\s*stock|discount|clearance|poor\s*perform)",
                 re.IGNORECASE,
             )
             assert not pattern.search(live_briefing), (
-                f"Bioactive Blend SKU '{sku}' is discussed as dead stock / poor performer "
+                f"BioSynergy SKU '{sku}' is discussed as dead stock / poor performer "
                 f"but it is a new Q1 2026 launch product.\n\n"
                 f"--- FULL BRIEFING ---\n\n{live_briefing}"
             )
         return
 
     section_text = section_match.group(1)
-    mentioned_bioactive: list[str] = []
-    for sku in BIOACTIVE_SKUS:
+    mentioned_biosynergy: list[str] = []
+    for sku in BIOSYNERGY_SKUS:
         if sku in section_text:
-            mentioned_bioactive.append(sku)
+            mentioned_biosynergy.append(sku)
 
-    assert not mentioned_bioactive, (
-        f"Dead stock / poor performer section mentions Bioactive Blend SKUs: "
-        f"{mentioned_bioactive}. These are new Q1 2026 launches and must be excluded.\n\n"
+    assert not mentioned_biosynergy, (
+        f"Dead stock / poor performer section mentions BioSynergy SKUs: "
+        f"{mentioned_biosynergy}. These are new Q1 2026 launches and must be excluded.\n\n"
         f"--- SECTION TEXT ---\n\n{section_text}"
     )
 

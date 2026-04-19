@@ -10,7 +10,7 @@ from schemas import SalesRow
 
 STAGNANT_COVER_VALUE: int = 999
 POOR_PERFORMER_COVER_THRESHOLD: float = 6.0
-BIOACTIVE_BLEND_KEYWORD: str = "Bioactive Blend"
+BIOSYNERGY_KEYWORD: str = "BioSynergy"
 
 
 def load_and_validate(file_path: str) -> pd.DataFrame:
@@ -53,7 +53,7 @@ def calculate(df: pd.DataFrame) -> pd.DataFrame:
     - Total_M1 through Total_M4: Omnichannel (Shopify + Amazon) unit sales per month.
     - Revenue_M4: Total_M4 * Retail_Price_USD.
     - MoM_Growth_Avg: Average month-over-month growth rate across the last 3 periods.
-    - Projected_M5_Sales: Forecast for next month (capped at ≥0; Bioactive Blend = M4).
+    - Projected_M5_Sales: Forecast for next month (capped at ≥0; BioSynergy = M4).
     - Current_Months_Cover: Stock_On_Hand / Projected_M5_Sales.
     - Effective_Months_Cover: (Stock_On_Hand + Units_On_Order) / Projected_M5_Sales.
     - Is_At_Risk: True when Effective_Months_Cover < Target_Months_Cover.
@@ -84,13 +84,13 @@ def calculate(df: pd.DataFrame) -> pd.DataFrame:
         mom_rates.append((curr - prev) / prev)
     out["MoM_Growth_Avg"] = pd.concat(mom_rates, axis=1).mean(axis=1)
 
-    # Bioactive Blend exception: use M4 as steady-state baseline to avoid over-forecasting
+    # BioSynergy exception: use M4 as steady-state baseline to avoid over-forecasting
     # initial launch spike.
     projected = out["Total_M4"] * (1 + out["MoM_Growth_Avg"])
     # fillna(0) handles SKUs where all historical sales are 0 (NaN from MoM calc).
     projected = projected.clip(lower=0).fillna(0)
-    is_bioactive = out["SKU"].str.contains(BIOACTIVE_BLEND_KEYWORD, na=False)
-    out["Projected_M5_Sales"] = projected.where(~is_bioactive, out["Total_M4"])
+    is_biosynergy = out["SKU"].str.contains(BIOSYNERGY_KEYWORD, na=False)
+    out["Projected_M5_Sales"] = projected.where(~is_biosynergy, out["Total_M4"])
 
     # C. Stock cover
     safe_projected = out["Projected_M5_Sales"].replace(0, pd.NA)

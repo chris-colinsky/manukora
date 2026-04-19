@@ -159,7 +159,7 @@ daily (`0 18 * * * UTC`).
 Slack - the same `st.markdown()` formatting from Part 1 works here. The message includes a "View Full Dashboard" link
 back to the Streamlit app for drill-down.
 
-**Why Slack over email:** Manukora is a DTC brand with a small exec team. Slack is where decisions happen. A Slack
+**Why Slack over email:** Terravita is a DTC brand with a small exec team. Slack is where decisions happen. A Slack
 message gets read in 30 seconds; an email gets buried. If the CEO prefers email, the same markdown renders via SendGrid
 in under 10 lines of code.
 
@@ -175,7 +175,7 @@ in under 10 lines of code.
 | Slack webhook                                                            | Free                    |
 | **Total**                                                                | **~$25-30/month**       |
 
-This is trivially cheap. The value of one prevented stockout on a $80 honey jar pays for years of this system.
+This is trivially cheap. The value of one prevented stockout on a $80 product pays for years of this system.
 
 ## Failure Modes & Mitigations
 

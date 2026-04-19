@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Project Is
 
-A job submission for Manukora (NZ DTC honey brand). The task: build an AI agent that generates a weekly S&OP (Sales & Operations Planning) briefing for non-technical executives. The system must do real supply chain math in Python/Pandas, then pass the results to an LLM for narrative reasoning — not raw CSV-to-LLM.
+A reference architecture demonstrating the "Calculate First, Reason Second" pattern for deterministic AI agents. The system generates a weekly S&OP (Sales & Operations Planning) briefing for non-technical executives using a fictional DTC wellness brand called "Terravita." All supply chain math is done in Python/Pandas, then the verified results are passed to an LLM for narrative reasoning — never raw CSV to LLM.
 
-The requirements are fully specified in `_reqs/submission-strategy-part-1.md`. Read that file before implementing anything.
+This project also demonstrates AI-assisted software development — every phase from requirements to deployment was built using AI coding tools (Claude Code, Gemini Pro).
 
 ## Package Management
 
@@ -49,7 +49,7 @@ sales-data.csv
 ### sop_engine.py (Pandas calculations)
 The engine must implement these in order:
 1. **Omni-channel totals**: `Total_M[1-4] = Shopify + Amazon`, `Revenue_M4 = Total_M4 * Retail_Price_USD`
-2. **Growth & projection**: `MoM_Growth_Avg` = average of 3 MoM rates; `Projected_M5 = Total_M4 * (1 + MoM_Growth_Avg)`. **Exception**: SKUs containing "Bioactive Blend" use `Projected_M5 = Total_M4` (new Q1 2026 products, suppress launch spike).
+2. **Growth & projection**: `MoM_Growth_Avg` = average of 3 MoM rates; `Projected_M5 = Total_M4 * (1 + MoM_Growth_Avg)`. **Exception**: SKUs containing "BioSynergy" use `Projected_M5 = Total_M4` (new Q1 2026 products, suppress launch spike).
 3. **Stock cover**: `Current_Months_Cover = Stock_On_Hand / Projected_M5`; `Effective_Months_Cover = (Stock_On_Hand + Units_On_Order) / Projected_M5`; `Is_At_Risk = Effective_Months_Cover < Target_Months_Cover`. If `Projected_M5 == 0`, set both cover values to 999.
 4. **Reorder qty**: `Total_Pipeline_Needed = (Target_Months_Cover + Order_Arrival_Months) * Projected_M5`; `Suggested_Reorder_Qty = MAX(0, Total_Pipeline_Needed - Stock_On_Hand - Units_On_Order)`
 5. **Air Freight Candidate**: `SKU with MAX(Revenue_M4)` among `Is_At_Risk == True`. **Do NOT pass this to the LLM** — it's ground truth for deepeval tests only.
@@ -84,9 +84,12 @@ Use `starlette.config.Config` in `backend/config.py`. Required env vars:
 ## Input Data
 
 `sales-data.csv` (also bundled at `backend/data/sales-data.csv`) — 12 SKUs:
-- Manuka Honey at MGO 100+, 263+, 514+, 850+, 1700+ in 250g/500g/100g
-- Propolis Tincture 30ml
-- Bioactive Blend Immunity/Energy/Recovery 250g (new Q1 2026 — special forecasting logic applies)
+- Daily Wellness Tier 1/2 in 250g/500g
+- Premium Supplement Tier 3 in 250g/500g
+- Ultra Concentrate Tier 4 in 250g/500g
+- Elite Formula Tier 5 in 100g
+- Energy Tincture 30ml
+- BioSynergy Immunity/Energy/Recovery 250g (new Q1 2026 — special forecasting logic applies)
 
 ## Deployment (Fly.io)
 Two separate Fly apps: `cd backend && fly launch`, then `cd frontend && fly launch` with `BACKEND_URL` pointing to the backend app.

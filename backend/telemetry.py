@@ -138,7 +138,7 @@ def get_tracer() -> trace.Tracer:
     Langfuse's own tracing.
 
     Returns:
-        A Tracer instance scoped to the honey-backend service.
+        A Tracer instance scoped to the backend service.
     """
     if _tracer_provider is not None:
         return _tracer_provider.get_tracer(config.OTEL_SERVICE_NAME)

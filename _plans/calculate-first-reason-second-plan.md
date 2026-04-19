@@ -1,17 +1,17 @@
-# Plan: S&OP AI Automation — Part 1 Submission
+# Plan: Calculate First, Reason Second — Reference Architecture
 
 ## Summary
 
-Build a production-grade, microservices-based S&OP briefing system for Manukora. A FastAPI backend reads `sales-data.csv`, runs all supply chain math in Pandas (Calculate First), then passes a clean JSON payload to the Anthropic Claude API for narrative reasoning (Reason Second). A Streamlit frontend auto-loads on open and presents the LLM briefing, KPI widgets, and a downloadable draft PO CSV. The system includes full observability (local Langfuse + OpenTelemetry), LLM evaluation via deepeval, pre-commit hooks, GitHub Actions CI, Docker containerization, and Fly.io deployment.
+Build a production-grade, microservices-based S&OP briefing system demonstrating the "Calculate First, Reason Second" pattern. A FastAPI backend reads `sales-data.csv`, runs all supply chain math in Pandas (Calculate First), then passes a clean JSON payload to the Anthropic Claude API for narrative reasoning (Reason Second). A Streamlit frontend auto-loads on open and presents the LLM briefing, KPI widgets, and a downloadable draft PO CSV. The system includes full observability (local Langfuse + OpenTelemetry), LLM evaluation via deepeval, pre-commit hooks, GitHub Actions CI, Docker containerization, and Fly.io deployment.
 
 ## Requirements Reference
 
-`_reqs/submission-strategy-part-1.md`
+`_reqs/calculate-first-reason-second.md`
 
 ## Clarifications & Decisions
 
 - **deepeval Air Freight extraction** → LLM prompt will require output of a clearly delimited line `**AIR FREIGHT SKU: <name>**` inside a `## Strategic Priority: Air Freight Recommendation` section; regex parses this deterministically.
-- **Fly.io** → Full cloud deployment required; hiring manager will evaluate the live URL.
+- **Fly.io** → Full cloud deployment required for live demo.
 - **Observability** → Locally self-hosted Langfuse via Docker in `docker-compose.yml`; OTLP exporter configured but no-op when `OTEL_EXPORTER_OTLP_ENDPOINT` is unset (stretch: wire to real HyperDX).
 - **Claude model** → `claude-sonnet-4-6` (latest available Sonnet).
 - **download-pos endpoint** → Returns all SKUs where `Suggested_Reorder_Qty > 0` as a downloadable CSV.
@@ -38,7 +38,7 @@ Build a production-grade, microservices-based S&OP briefing system for Manukora.
 - [ ] `backend/schemas.py` — Pydantic models: `SalesRow` (validates each CSV row), `SOPMetrics`, `RedFlagItem`, `SOPResponse` (the full API response shape)
 - [ ] `backend/sop_engine.py` — Pure Pandas calculation engine:
   - Omni-channel totals (Total_M1–M4, Revenue_M4)
-  - MoM_Growth_Avg; Projected_M5 (with Bioactive Blend exception → use M4 as baseline)
+  - MoM_Growth_Avg; Projected_M5 (with BioSynergy exception → use M4 as baseline)
   - Current_Months_Cover, Effective_Months_Cover (division-by-zero → 999)
   - Is_At_Risk flag
   - Total_Pipeline_Needed, Suggested_Reorder_Qty
@@ -80,7 +80,7 @@ Build a production-grade, microservices-based S&OP briefing system for Manukora.
 
 - [ ] `backend/tests/test_sop_engine.py` — Unit tests for every formula in sop_engine:
   - Happy path for all calculations
-  - Bioactive Blend projection exception
+  - BioSynergy projection exception
   - Division-by-zero edge case (Projected_M5 = 0 → cover = 999)
   - Is_At_Risk flag logic
   - Reorder qty formula
@@ -145,7 +145,7 @@ _docs/
   architecture.mmd
 
 _plans/
-  submission-strategy-part-1-plan.md   — this file
+  calculate-first-reason-second-plan.md — this file
 
 .github/workflows/ci.yml
 .pre-commit-config.yaml
@@ -158,7 +158,7 @@ README.md                   — rewrite with badges, diagram, full setup guide
 
 ## Out of Scope
 
-- Part 2 of the submission (Morning Intelligence Brief writeup) — separate deliverable
+- Morning Intelligence Brief extension — separate deliverable
 - Real cloud HyperDX account (OTLP exporter present but no-op without endpoint)
 - Real cloud Langfuse (locally self-hosted in Docker only, unless stretch goal reached)
 - Authentication / API key protection on FastAPI endpoints

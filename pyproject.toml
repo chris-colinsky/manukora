@@ -1,7 +1,7 @@
 [project]
-name = "honey"
+name = "deterministic-ai-agent"
 version = "0.1.0"
-description = "Add your description here"
+description = "Reference architecture for deterministic AI agents using the Calculate First, Reason Second pattern — a weekly S&OP briefing where Pandas does the math and the LLM handles narrative reasoning."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []

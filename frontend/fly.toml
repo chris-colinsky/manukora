@@ -1,16 +1,16 @@
-# fly.toml app configuration file generated for manukora-frontend on 2026-04-08T18:56:56-07:00
+# fly.toml app configuration file generated for cfrr-frontend
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'manukora-frontend'
+app = 'frontend'
 primary_region = 'lax'
 
 [build]
   dockerfile = 'Dockerfile'
 
 [env]
-  BACKEND_URL = 'https://manukora-backend.fly.dev'
+  BACKEND_URL = 'https://cfrr-backend.fly.dev'
 
 [http_service]
   internal_port = 8501

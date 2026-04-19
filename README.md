@@ -1,54 +1,103 @@
-# Manukora S&OP Intelligence
+# Calculate First, Reason Second
 
-[![CI](https://github.com/chris-colinsky/manukora/actions/workflows/ci.yml/badge.svg)](https://github.com/chris-colinsky/manukora/actions/workflows/ci.yml)
-[![Backend Coverage](https://img.shields.io/badge/backend%20coverage-90%25-brightgreen)](https://github.com/chris-colinsky/manukora)
-[![Frontend Coverage](https://img.shields.io/badge/frontend%20coverage-95%25-brightgreen)](https://github.com/chris-colinsky/manukora)
+[![CI](https://github.com/chris-colinsky/deterministic-ai-agent-pattern/actions/workflows/ci.yml/badge.svg)](https://github.com/chris-colinsky/deterministic-ai-agent-pattern/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.12-blue)](https://python.org)
 
-An AI-powered weekly S&OP briefing system for the Manukora DTC brand. A FastAPI backend runs all supply chain maths deterministically in Pandas, then passes verified data to Claude for executive narrative. A Streamlit frontend autoloads the briefing — no clicks required.
+A reference architecture for building deterministic AI agents. LLMs are reasoning engines, not calculators — so do all the math first, then let the LLM do what it's best at: turning verified data into narrative.
 
-## Live Demo & Key Documents
+> *"Terravita" is a fictitious DTC wellness brand used throughout this project for demonstration purposes.*
 
-| Resource                               | Link                                                                                                                                                           |
-|----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Live Dashboard**                     | [manukora-frontend.fly.dev](https://manukora-frontend.fly.dev)                                                                                                 |
-| **Backend API (Swagger)**              | [manukora-backend.fly.dev/docs](https://manukora-backend.fly.dev/docs)                                                                                         |
-| **Part 2: Morning Intelligence Brief** | [`_docs/part-2-morning-brief.md`](_docs/part-2-morning-brief.md)                                                                                               |
-| **Learning Concepts**                  | [`_docs/learning_concepts.md`](_docs/learning_concepts.md) — reference guide explaining every technology, pattern, and architectural decision in this project  |
-| **Architecture Decision Record**       | [`_docs/adr/0001-calculate-first-reason-second.md`](_docs/adr/0001-calculate-first-reason-second.md) — why all math is done in Pandas before the LLM is called |
-| **Architecture Diagram**               | [`_docs/architecture.mmd`](_docs/architecture.mmd) — Mermaid.js diagram of the full data flow                                                                  |
-| **Eval Results (Production)**          | [`_docs/production-eval-results.txt`](_docs/production-eval-results.txt) — deepeval scores from Claude Sonnet                                                  |
-| **Eval Results (Local)**               | [`_docs/local-eval-results.txt`](_docs/local-eval-results.txt) — deepeval scores from Mistral Small 3                                                          |
+## The Problem
 
-## How I Built This (AI-Assisted Development)
+Feeding raw CSVs to an LLM and asking it to "analyze the data" results in:
+- **Arithmetic hallucinations** — the model invents numbers that look plausible but are wrong
+- **Broken JSON** — structured output that fails downstream parsing
+- **Catastrophic business decisions** — like recommending 400 units of dead stock for reorder
 
-> *"We expect you to use AI in your work. How you use it is part of what we're evaluating."*
+These failures aren't edge cases. They're the default behavior when you use a reasoning engine as a calculator.
 
-This project was built end-to-end using AI as a force multiplier across every phase. Here's the actual process:
+## The Solution: Calculate First, Reason Second
 
-### 1. Strategy & PRD
-Used **Gemini Pro 3.1** to draft the overall business strategy and product requirements document. The goal was to translate the submission brief into a comprehensive technical spec before touching any code.
+Split the pipeline into two distinct phases:
 
-### 2. Requirements Specification
-Translated the PRD into a detailed technical requirements file ([`_reqs/submission-strategy-part-1.md`](_reqs/submission-strategy-part-1.md)) with explicit supply chain formulas, data schemas, API contracts, and acceptance criteria. This file became the single source of truth for the entire build.
+1. **Deterministic Math (Pandas)** — All supply chain calculations (growth rates, stock cover, reorder quantities) are computed in Python with Pandas. Every formula is unit-tested. The output is a verified JSON payload.
+2. **Non-Deterministic Reasoning (LLM)** — The LLM receives only the pre-computed payload. It writes the executive narrative, makes strategic recommendations, and identifies the air freight candidate — all grounded in verified numbers.
 
-### 3. Structured Planning with Claude Code
-Used a custom **`/feature-planning` skill** — a Claude Code slash command I built that enforces a 3-gate human-approval workflow before any code is written:
+The LLM never sees raw CSV data. It reasons over facts, not files.
 
-- **Gate 1 (Clarify):** Claude reads the requirements file and appends clarifying questions directly into the file. I answer them in the file, then reply "answered." This forces ambiguity resolution before design begins.
-- **Gate 2 (Plan):** Claude writes a full implementation plan to [`_plans/submission-strategy-part-1-plan.md`](_plans/submission-strategy-part-1-plan.md). I review, request changes, and only reply "approved" when the plan is solid. No code is written until this gate passes.
-- **Gate 3 (Build):** Implementation begins phase-by-phase according to the approved plan.
+```mermaid
+flowchart LR
+    subgraph deterministic["Deterministic Phase"]
+        CSV[(sales-data.csv)]
+        ENGINE["sop_engine.py\n(Pandas)"]
+        SCHEMAS["schemas.py\n(Pydantic)"]
+    end
 
-This workflow eliminates wasted implementation cycles. Claude doesn't guess at what to build — it builds exactly what was agreed.
+    subgraph nondeterministic["Non-Deterministic Phase"]
+        LLM["LLM Service"]
+        EVAL["deepeval\n(Validation)"]
+    end
 
-### 4. Iterative Backend Development
-Built the Pandas calculation engine, FastAPI endpoints, LLM service (factory pattern for local/production), schemas, and telemetry iteratively with Claude Code. Each component was tested before moving to the next.
+    subgraph presentation["Presentation"]
+        API["FastAPI\napi.py"]
+        UI["Streamlit\napp.py"]
+    end
 
-### 5. Prompt Hardening via Local LLM
-This was the most valuable AI-assisted step. I tested the prompt against **Mistral Small 3 (24B)** running locally via LM Studio. Smaller open-weight models are notoriously worse at following subtle instructions than Claude Sonnet — which makes them perfect for exposing prompt weaknesses. Every failure became a prompt fix AND a new eval test. Six issues caught and hardened (see [Prompt Hardening Strategy](#local-llm-testing-as-a-prompt-hardening-strategy) below for the full breakdown).
+    CSV --> ENGINE
+    ENGINE --> SCHEMAS
+    SCHEMAS --> API
+    API --> LLM
+    LLM --> EVAL
+    LLM --> API
+    API --> UI
+```
 
-### 6. Frontend & Deployment
-Built the Streamlit dashboard, tested both services via Docker Compose locally, then deployed to Fly.io. The entire infrastructure — from Dockerfiles to fly.toml configs to health checks — was pair-programmed with Claude Code.
+## Key Features
+
+### CI/CD for LLMs (deepeval)
+
+How do you test that an LLM is reasoning correctly? You compare its output against deterministic ground truth.
+
+The air freight candidate (the at-risk SKU with the highest revenue) is computed by Pandas but **intentionally withheld** from the LLM's input payload. The LLM must identify it independently from the data. deepeval then grades the LLM's pick against the Pandas answer — using Claude Opus as the judge.
+
+| Metric                  | What it proves                                                                  |
+|-------------------------|---------------------------------------------------------------------------------|
+| Air Freight Correctness | LLM identifies the right SKU from data, not a pre-supplied answer               |
+| Briefing Completeness   | All required sections are present and properly structured                       |
+| Faithfulness            | Every claim traces back to the pre-calculated payload — no hallucinated numbers |
+
+### Zero-Hallucination Guardrails
+
+The "Empty State Fallback" prompting technique prevents the LLM from inventing data when none exists. When no SKUs meet the dead stock criteria, the prompt uses explicit IF/ELSE branching:
+
+> *IF the `poor_performers` list is EMPTY: Write "No SKUs currently meet our dead stock criteria." Then move on. Do NOT pick a SKU from elsewhere in the data. Do NOT invent a poor performer.*
+
+Without this, smaller models will reliably hallucinate a poor performer to "fulfill" the prompt's expectation.
+
+### Actionable Workflows
+
+AI should drive action, not just chat. The "Download Draft POs" endpoint generates a CSV of purchase orders ready for upload to an inventory system — turning the LLM's strategic narrative into an executable business artifact.
+
+## Built With AI Coding Tools
+
+This project is also a demonstration of AI-assisted software development. Every phase — from requirements specification to deployment — was built using AI coding tools as a force multiplier.
+
+### The Workflow
+
+1. **Strategy & PRD** — Used Gemini Pro to draft the business strategy and product requirements document, translating a brief into a comprehensive technical spec.
+
+2. **Requirements Specification** — Translated the PRD into a detailed technical requirements file ([`_reqs/calculate-first-reason-second.md`](_reqs/calculate-first-reason-second.md)) with explicit supply chain formulas, data schemas, API contracts, and acceptance criteria.
+
+3. **Structured Planning with Claude Code** — Used a custom **`/feature-planning` skill** — a Claude Code slash command that enforces a 3-gate human-approval workflow before any code is written:
+   - **Gate 1 (Clarify):** Claude reads the requirements file and appends clarifying questions directly into the file. Answers go in the file, then "answered" proceeds.
+   - **Gate 2 (Plan):** Claude writes a full implementation plan. Only "approved" unlocks implementation.
+   - **Gate 3 (Build):** Implementation proceeds phase-by-phase according to the approved plan.
+
+4. **Iterative Development** — Built the Pandas calculation engine, FastAPI endpoints, LLM service (factory pattern for local/production), schemas, and telemetry iteratively with Claude Code.
+
+5. **Prompt Hardening via Local LLM** — Tested against Mistral Small 3 (24B) running locally. Smaller models expose prompt weaknesses that larger models mask. Every failure became a prompt fix AND a new eval test.
+
+6. **Frontend & Deployment** — Built the Streamlit dashboard, tested via Docker Compose, deployed to Fly.io — all pair-programmed with Claude Code.
 
 ## Table of Contents
 
@@ -152,12 +201,12 @@ make pre-commit       # install and run pre-commit hooks
 
 The project has three tiers of tests:
 
-| Suite        | File                 | Tests                  | What it validates                                                                                                                        |
-|--------------|----------------------|------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| **Unit**     | `test_sop_engine.py` | 23                     | Every supply chain formula, edge cases (division by zero, Bioactive Blend exception), reorder calculations                               |
-| **API**      | `test_api.py`        | 10                     | FastAPI endpoints via TestClient, error handling, CSV download format                                                                    |
-| **LLM Eval** | `test_evals.py`      | 8 unit + 6 integration | Air freight extraction, ground truth validation, red flags integrity, Bioactive Blend exclusion, dead stock validity, MoM trend presence |
-| **deepeval** | `run_evals.py`       | 3 metrics              | Air freight correctness, briefing completeness, faithfulness (Claude Opus as judge)                                                      |
+| Suite        | File                 | Tests                  | What it validates                                                                                                                    |
+|--------------|----------------------|------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| **Unit**     | `test_sop_engine.py` | 23                     | Every supply chain formula, edge cases (division by zero, BioSynergy exception), reorder calculations                                |
+| **API**      | `test_api.py`        | 10                     | FastAPI endpoints via TestClient, error handling, CSV download format                                                                |
+| **LLM Eval** | `test_evals.py`      | 8 unit + 6 integration | Air freight extraction, ground truth validation, red flags integrity, BioSynergy exclusion, dead stock validity, MoM trend presence  |
+| **deepeval** | `run_evals.py`       | 3 metrics              | Air freight correctness, briefing completeness, faithfulness (Claude Opus as judge)                                                  |
 
 ### Running Unit & API Tests (no LLM required)
 
@@ -186,11 +235,11 @@ ENV=production make test-integration
 
 The standalone evaluation runner (`tests/run_evals.py`) uses [deepeval](https://github.com/confident-ai/deepeval) with **Claude Opus** as the LLM judge — a stronger model evaluating the output of Claude Sonnet. This follows the best practice of using a more capable model as the evaluator.
 
-| Metric                  | Type               | What it proves                                                                                                                    |
-|-------------------------|--------------------|-----------------------------------------------------------------------------------------------------------------------------------|
-| Air Freight Correctness | GEval              | The briefing's air freight recommendation identifies a top-revenue at-risk SKU with sound reasoning                               |
-| Briefing Completeness   | GEval              | All 6 required sections are present (exec summary, sales performance, red flags, reorder recs, Bioactive Blend note, air freight) |
-| Faithfulness            | FaithfulnessMetric | Every claim in the briefing traces back to the pre-calculated data payload — no hallucinated numbers                              |
+| Metric                  | Type               | What it proves                                                                                                               |
+|-------------------------|--------------------|------------------------------------------------------------------------------------------------------------------------------|
+| Air Freight Correctness | GEval              | The briefing's air freight recommendation identifies a top-revenue at-risk SKU with sound reasoning                          |
+| Briefing Completeness   | GEval              | All 6 required sections are present (exec summary, sales performance, red flags, reorder recs, BioSynergy note, air freight) |
+| Faithfulness            | FaithfulnessMetric | Every claim in the briefing traces back to the pre-calculated data payload — no hallucinated numbers                         |
 
 The faithfulness metric is the core proof that the **"calculate first, reason second"** architecture works: the LLM reasons over verified data, not raw CSV.
 
@@ -226,10 +275,10 @@ This approach caught several critical issues that the deepeval metrics alone mis
 | Issue                                   | What happened                                                                                                      | How we caught it                                                               | Fix                                                                                                                              |
 |-----------------------------------------|--------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | **Hallucinated Red Flags**              | LLM flagged SKUs as "at risk" when their effective cover exceeded target                                           | Visual review of local output vs. Pandas ground truth table                    | Added `MUST ONLY select SKUs where Is_At_Risk == True` constraint; added `test_live_llm_red_flags_only_at_risk_skus` eval        |
-| **Bioactive Blend as dead stock**       | LLM classified new Q1 2026 launch products as poor performers                                                      | Visual review — LLM ignored business context about new launches                | Added `FORBIDDEN` block excluding Bioactive Blend from dead stock section; added `test_live_llm_bioactive_not_dead_stock` eval   |
+| **BioSynergy as dead stock**            | LLM classified new Q1 2026 launch products as poor performers                                                      | Visual review — LLM ignored business context about new launches                | Added `FORBIDDEN` block excluding BioSynergy from dead stock section; added `test_live_llm_biosynergy_not_dead_stock` eval       |
 | **Empty poor_performers hallucination** | When no SKUs met dead stock criteria (negative MoM + high cover), LLM invented one to fulfill the prompt's command | Local run produced zero valid poor performers, LLM picked a healthy SKU anyway | Restructured prompt with explicit IF/ELSE branching on empty list; added `test_live_llm_dead_stock_is_valid_poor_performer` eval |
 | **Wrong air freight pick**              | LLM selected a lower-revenue at-risk SKU instead of the highest                                                    | Compared LLM output to Pandas `skus_at_risk` sorted by Revenue_M4              | Replaced prose instruction with algorithmic steps (sort → pick highest); existing air freight eval already covered this          |
-| **Missing MoM trends**                  | Rubric requires "trend across prior months" but LLM omitted growth percentages                                     | Checked output against submission guidelines                                   | Added per-SKU MoM requirement; added `test_live_llm_performers_include_mom_trend` eval                                           |
+| **Missing MoM trends**                  | Rubric requires trend data but LLM omitted growth percentages                                                      | Checked output against requirements                                            | Added per-SKU MoM requirement; added `test_live_llm_performers_include_mom_trend` eval                                           |
 | **Reorder for healthy stock**           | Pandas recommended 414 units for a SKU with effective cover above target (not at risk)                             | Reviewed PO CSV download — contradicted dashboard's own risk assessment        | Fixed `sop_engine.py` to zero out `Suggested_Reorder_Qty` when `Is_At_Risk == False`                                             |
 
 The pattern: run locally, compare LLM output against Pandas ground truth, identify the gap, harden the prompt AND add an eval to prevent regression. Each bug became a new integration test so it can never recur silently.
@@ -315,7 +364,7 @@ cp .env.example frontend/.env
 | `LOCAL_LLM_MODEL`             | Local only      | `local-model`              | Model name for local inference                                                 |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | No              | —                          | OTLP endpoint — HyperDX OTLP ingestion port is `4318` (not the UI port `8080`) |
 | `OTEL_EXPORTER_OTLP_HEADERS`  | No              | —                          | OTLP auth headers (e.g., `authorization=Bearer <key>`; omit for local)         |
-| `OTEL_SERVICE_NAME`           | No              | `manukora-backend`         | Service name in traces                                                         |
+| `OTEL_SERVICE_NAME`           | No              | `cfrr-backend`             | Service name in traces                                                         |
 | `LANGFUSE_PUBLIC_KEY`         | No              | —                          | Langfuse project public key                                                    |
 | `LANGFUSE_SECRET_KEY`         | No              | —                          | Langfuse project secret key                                                    |
 | `LANGFUSE_HOST`               | No              | `http://localhost:3000`    | Langfuse host URL                                                              |
@@ -347,7 +396,7 @@ make reqs
 
 ```bash
 cd backend
-fly launch --name manukora-backend
+fly launch --name cfrr-backend
 ```
 
 Set all production secrets (these are stored encrypted by Fly — never committed to the repo):
@@ -369,18 +418,18 @@ Deploy:
 fly deploy
 ```
 
-Verify: `https://manukora-backend.fly.dev/docs`
+Verify: `https://cfrr-backend.fly.dev/docs`
 
 ### 3. Deploy frontend
 
 ```bash
 cd frontend
-fly launch --name manukora-frontend
-fly secrets set BACKEND_URL=https://manukora-backend.fly.dev
+fly launch --name cfrr-frontend
+fly secrets set BACKEND_URL=https://cfrr-backend.fly.dev
 fly deploy
 ```
 
-Verify: `https://manukora-frontend.fly.dev`
+Verify: `https://cfrr-frontend.fly.dev`
 
 ### 4. Push prompts to cloud Langfuse
 
@@ -393,7 +442,7 @@ make push-prompt ARGS="-m 'Initial production deployment'"
 ## Project Structure
 
 ```
-manukora/
+deterministic-ai-agent-pattern/
 ├── .env.example                # Template — copy to backend/.env and frontend/.env
 ├── backend/                    # FastAPI microservice
 │   ├── .env                    # ← NOT committed; copy from root .env.example
@@ -419,8 +468,8 @@ manukora/
 ├── _docs/
 │   ├── adr/0001-calculate-first-reason-second.md
 │   └── architecture.mmd
-├── _reqs/submission-strategy-part-1.md
-├── _plans/submission-strategy-part-1-plan.md
+├── _reqs/calculate-first-reason-second.md
+├── _plans/calculate-first-reason-second-plan.md
 ├── Makefile
 ├── docker-compose.yml
 └── .github/workflows/ci.yml

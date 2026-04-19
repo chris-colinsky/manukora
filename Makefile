@@ -25,8 +25,8 @@ reqs:
 	cd frontend && uv export --format requirements-txt --no-dev > requirements.txt
 
 docker-build: reqs
-	docker build -t honey-backend ./backend
-	docker build -t honey-frontend ./frontend
+	docker build -t backend ./backend
+	docker build -t frontend ./frontend
 
 up:
 	docker compose up

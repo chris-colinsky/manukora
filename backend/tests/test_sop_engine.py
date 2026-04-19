@@ -15,7 +15,7 @@ MINIMAL_CSV = """\
 SKU,Shopify_Units_M1,Shopify_Units_M2,Shopify_Units_M3,Shopify_Units_M4,Amazon_Units_M1,Amazon_Units_M2,Amazon_Units_M3,Amazon_Units_M4,Stock_On_Hand,Units_On_Order,Order_Arrival_Months,Target_Months_Cover,Retail_Price_USD
 Alpha,100,110,120,130,50,55,60,65,500,200,1,2,10.00
 Beta,200,180,160,140,100,90,80,70,2000,0,0,2,20.00
-Bioactive Blend Immunity 250g,100,120,144,173,50,60,72,86,600,200,1,2,15.00
+BioSynergy Immunity 250g,100,120,144,173,50,60,72,86,600,200,1,2,15.00
 ZeroSales,0,0,0,0,0,0,0,0,100,0,0,2,5.00
 AtRisk,80,85,90,95,40,42,45,48,100,0,1,2,50.00
 """
@@ -70,14 +70,14 @@ def test_projected_m5_not_negative(base_df: pd.DataFrame) -> None:
     assert (base_df["Projected_M5_Sales"] >= 0).all()
 
 
-def test_bioactive_blend_projection_uses_m4_baseline(base_df: pd.DataFrame) -> None:
-    """Bioactive Blend SKUs must use Total_M4 as Projected_M5 (not compounded growth)."""
-    bio = base_df[base_df["SKU"] == "Bioactive Blend Immunity 250g"].iloc[0]
+def test_biosynergy_projection_uses_m4_baseline(base_df: pd.DataFrame) -> None:
+    """BioSynergy SKUs must use Total_M4 as Projected_M5 (not compounded growth)."""
+    bio = base_df[base_df["SKU"] == "BioSynergy Immunity 250g"].iloc[0]
     assert bio["Projected_M5_Sales"] == pytest.approx(bio["Total_M4"])
 
 
-def test_non_bioactive_projection_uses_growth(base_df: pd.DataFrame) -> None:
-    """Non-Bioactive Blend SKUs must use the compounded MoM growth projection."""
+def test_non_biosynergy_projection_uses_growth(base_df: pd.DataFrame) -> None:
+    """Non-BioSynergy SKUs must use the compounded MoM growth projection."""
     alpha = base_df[base_df["SKU"] == "Alpha"].iloc[0]
     expected = alpha["Total_M4"] * (1 + alpha["MoM_Growth_Avg"])
     assert alpha["Projected_M5_Sales"] == pytest.approx(expected)

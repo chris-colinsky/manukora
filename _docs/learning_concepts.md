@@ -140,7 +140,7 @@ The Python data analysis library. All supply chain math is implemented as vector
 
 - **Boolean masking** -- `df[df["Is_At_Risk"]]` to filter at-risk SKUs
 - **Safe division** -- `.replace(0, pd.NA)` before dividing to avoid ZeroDivisionError, then `.fillna(999)` for stagnant products
-- **Conditional assignment** -- `.where(~is_bioactive, ...)` for the Bioactive Blend exception
+- **Conditional assignment** -- `.where(~is_bioactive, ...)` for the BioSynergy exception
 - **Chained operations** -- `.clip(lower=0).astype(int)` to ensure non-negative integer reorder quantities
 
 ### Supply Chain Formulas
@@ -158,7 +158,7 @@ Standard S&OP calculations implemented in Pandas:
 | `Total_Pipeline_Needed` | `(Target_Cover + Lead_Time) * Projected_Sales` |
 | `Suggested_Reorder_Qty` | `MAX(0, Pipeline_Needed - Stock - On_Order)` |
 
-The **Bioactive Blend exception** suppresses growth projection for new Q1 2026 products, using M4 actuals as a flat baseline to avoid over-ordering based on launch spikes.
+The **BioSynergy exception** suppresses growth projection for new Q1 2026 products, using M4 actuals as a flat baseline to avoid over-ordering based on launch spikes.
 
 ---
 

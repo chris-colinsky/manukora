@@ -85,7 +85,7 @@ def main() -> None:
             "reminder about seasonality limitations. "
             "4) Reorder recommendations for at least 3 SKUs with business "
             "reasoning referencing lead times, pipeline, and target cover. "
-            "5) A note about Bioactive Blend products being new Q1 2026 "
+            "5) A note about BioSynergy products being new Q1 2026 "
             "launches with conservative demand modelling. "
             "6) A strategic air freight recommendation with a clearly "
             "delimited **AIR FREIGHT SKU: <name>** line."

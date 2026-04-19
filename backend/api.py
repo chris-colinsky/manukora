@@ -52,11 +52,11 @@ def create_app() -> FastAPI:
         A configured FastAPI instance.
     """
     application = FastAPI(
-        title="Manukora S&OP API",
+        title="Terravita S&OP API",
         description=(
-            "AI-powered Sales & Operations Planning briefing for Manukora. "
+            "AI-powered Sales & Operations Planning briefing for Terravita. "
             "Calculates supply chain metrics with Pandas and generates "
-            "executive narrative with Claude."
+            "executive narrative with an LLM."
         ),
         version="1.0.0",
         lifespan=lifespan,

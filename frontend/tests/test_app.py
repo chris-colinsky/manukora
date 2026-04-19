@@ -17,14 +17,14 @@ MOCK_SUCCESS_RESPONSE = {
     "metrics": {"total_m4_revenue": 148250.50, "skus_at_risk": 3},
     "red_flag_data": [
         {
-            "SKU": "Manuka Honey MGO 263+ 500g",
+            "SKU": "Daily Wellness Tier 2 500g",
             "Effective_Months_Cover": 1.3,
             "Target_Months_Cover": 2,
             "Suggested_Reorder_Qty": 764,
             "Revenue_M4": 37613.16,
         },
         {
-            "SKU": "Manuka Honey MGO 514+ 500g",
+            "SKU": "Premium Supplement Tier 3 500g",
             "Effective_Months_Cover": 1.1,
             "Target_Months_Cover": 2,
             "Suggested_Reorder_Qty": 450,
@@ -34,7 +34,7 @@ MOCK_SUCCESS_RESPONSE = {
     "llm_briefing": (
         "## Executive Summary\n\nStrong omnichannel performance this month.\n\n"
         "## Strategic Priority: Air Freight Recommendation\n\n"
-        "**AIR FREIGHT SKU: Manuka Honey MGO 263+ 500g**"
+        "**AIR FREIGHT SKU: Daily Wellness Tier 2 500g**"
     ),
 }
 
@@ -49,7 +49,7 @@ def _make_mock_response(data: dict) -> MagicMock:
     """Build a mock requests.Response returning the given dict as JSON."""
     mock_resp = MagicMock()
     mock_resp.json.return_value = data
-    mock_resp.content = b"SKU,Order_Qty\nManuka Honey MGO 263+ 500g,764\n"
+    mock_resp.content = b"SKU,Order_Qty\nDaily Wellness Tier 2 500g,764\n"
     mock_resp.raise_for_status.return_value = None
     return mock_resp
 
@@ -116,7 +116,7 @@ def test_dashboard_renders_briefing_content() -> None:
 
     assert not at.exception
     markdown_texts = " ".join(m.value for m in at.markdown)
-    assert "Executive Summary" in markdown_texts or "Manukora" in markdown_texts
+    assert "Executive Summary" in markdown_texts or "Terravita" in markdown_texts
 
 
 def test_dashboard_handles_connection_error() -> None:

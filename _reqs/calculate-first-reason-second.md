@@ -1,10 +1,8 @@
-# S&OP AI Automation - Requirements Document
+# Calculate First, Reason Second — Requirements Document
 
 ## 1. Project Overview & Strategy
 
-**Goal:** Automate a weekly Sales & Operations Planning (S&OP) briefing for a DTC honey brand (Shopify & Amazon). The output must be a 5-minute read for non-technical executives, identifying sales trends, stock risks, and making calculated reorder recommendations.
-
-This is Part 1 of the [Submission Guidlines](../_docs/submission_guidelines.md)
+**Goal:** Build a reference architecture demonstrating the "Calculate First, Reason Second" pattern for deterministic AI agents. The example application generates a weekly S&OP (Sales & Operations Planning) briefing for non-technical executives of a fictional DTC wellness brand ("Terravita"), identifying sales trends, stock risks, and making calculated reorder recommendations.
 
 **Architectural Strategy: Microservices ("Calculate First, Reason Second")**
 
@@ -45,10 +43,10 @@ The backend engine must implement the following calculations for *each SKU* usin
 - **Formulas:**  
   - MoM_Growth_Avg = Average of ((M2-M1)/M1, (M3-M2)/M2, (M4-M3)/M3)  
   - Projected_M5_Sales = Total_M4 * (1 + MoM_Growth_Avg) *(Note: Ensure no negative projections).*  
-  - **NEW PRODUCT EXCEPTION:** If SKU contains "Bioactive Blend", set Projected_M5_Sales = Total_M4. (Because these are new Q1 2026 releases, their initial growth trend is artificially high. We treat their most recent month as the steady-state baseline to avoid over-forecasting).  
+  - **NEW PRODUCT EXCEPTION:** If SKU contains "BioSynergy", set Projected_M5_Sales = Total_M4. (Because these are new Q1 2026 releases, their initial growth trend is artificially high. We treat their most recent month as the steady-state baseline to avoid over-forecasting).  
 - **What it represents:** The historical month-over-month growth rate and a realistic forecast of next month's sales based on that current momentum.  
-- **Insights:** Shows whether a product's demand is accelerating or dying out. Using projected M5 sales prevents stockouts for rapidly growing products. **Crucial Limit:** This is a "naive" forecasting model based strictly on recent momentum. It *does not* account for seasonality (e.g., honey and immunity products naturally spiking in winter or dropping in summer).  
-- **LLM Instructions:** The LLM should reference MoM_Growth_Avg to add narrative context (e.g., "MGO 263+ is up 10% MoM"). **Importantly, the LLM must explicitly caveat** that these projections and stock risks are based purely on 4-month trailing momentum and advise the executive team to overlay their knowledge of upcoming seasonal shifts when reviewing the reorder recommendations. It must also explicitly mention the conservative baseline approach taken for the new Bioactive Blend products.
+- **Insights:** Shows whether a product's demand is accelerating or dying out. Using projected M5 sales prevents stockouts for rapidly growing products. **Crucial Limit:** This is a "naive" forecasting model based strictly on recent momentum. It *does not* account for seasonality (e.g., wellness products naturally spiking in winter or dropping in summer).  
+- **LLM Instructions:** The LLM should reference MoM_Growth_Avg to add narrative context (e.g., "Tier 2 250g is up 10% MoM"). **Importantly, the LLM must explicitly caveat** that these projections and stock risks are based purely on 4-month trailing momentum and advise the executive team to overlay their knowledge of upcoming seasonal shifts when reviewing the reorder recommendations. It must also explicitly mention the conservative baseline approach taken for the new BioSynergy products.
 
 ### C. Stock Cover Status
 
@@ -102,7 +100,7 @@ The backend engine must implement the following calculations for *each SKU* usin
   ├── _plans/
   │   └── implementation.md                         # Implementation plan for the project 
   ├── _reqs/
-  │   ├── submission-strategy-part-1.md             # Product Requirements Document 
+  │   ├── calculate-first-reason-second.md           # Requirements Document 
   ├── _docs/
   │   ├── adr/
   │   │   └── 0001-calculate-first-reason-second.md # Architecture Decision Record
@@ -210,7 +208,7 @@ To avoid introducing heavyweight abstraction layers (like LiteLLM proxies) while
 
 **System Prompt:**
 
-"You are an expert Supply Chain & S&OP Director for a highly successful DTC honey brand. Your task is to review the weekly pre-calculated inventory data and write a concise, highly actionable S&OP briefing for the executive team. The briefing must take under 5 minutes to read. Use a professional, data-driven, yet accessible tone. Use Markdown formatting for readability."
+"You are an expert Supply Chain & S&OP Director for an omni-channel retailer. Your task is to review the weekly pre-calculated inventory data and write a concise, highly actionable S&OP briefing for the executive team. The briefing must take under 5 minutes to read. Use a professional, data-driven, yet accessible tone. Use Markdown formatting for readability."
 
 **User Prompt:**
 
@@ -220,7 +218,7 @@ To avoid introducing heavyweight abstraction layers (like LiteLLM proxies) while
 2. Highlight what sold well vs. what sold poorly. Specifically, call out the worst-performing SKU (dead stock) and reason about whether we should implement a discount or bundling strategy to free up working capital.  
 3. Create a 'Red Flags' section for SKUs falling below target cover. Note that projections are based on trailing 4-month momentum; explicitly remind the team to consider upcoming seasonality factors.  
 4. Make reorder recommendations for at least 3 SKUs. Use the 'Suggested_Reorder_Qty' provided, but write out the genuine business reasoning for *why* we are ordering that amount (e.g., referencing lead times, current pipeline, and target cover). If multiple items need reordering, prioritize them: reason about which one is the highest priority based on its revenue contribution (Revenue_M4) vs. its lead time, assuming a constrained cash-flow environment.  
-5. Acknowledge the 'Bioactive Blend' line as new Q1 2026 products. Explain to the team that to avoid over-ordering on an initial launch spike, we have conservatively modeled their future demand using their current M4 baseline rather than compounding their initial MoM growth.
+5. Acknowledge the 'BioSynergy' line as new Q1 2026 products. Explain to the team that to avoid over-ordering on an initial launch spike, we have conservatively modeled their future demand using their current M4 baseline rather than compounding their initial MoM growth.
 6. **Strategic Priority (Air Freight):** Based on the data provided, identify the single most critical SKU that is currently at risk. Weigh its recent revenue contribution (Revenue_M4) against its stock risk. Make a recommendation on whether we should pay a premium to air-freight this specific item to protect top-line revenue and justify your choice logically.
 
 DATA PAYLOAD:
@@ -246,7 +244,7 @@ To demonstrate production-ready engineering, the project must include a docker-c
 * LANGFUSE_SECRET_KEY  
 * LANGFUSE_HOST
 
-*Deployment Instructions for Interview Demo (Fly.io):*
+*Deployment (Fly.io):*
 
 Deploying microservices on Fly.io involves creating two separate apps.
 
@@ -264,7 +262,7 @@ The generated repository must adhere to the following documentation standards:
   - **Setup Instructions**: Explicit, copy-pasteable commands for both local development using uv and containerized workflows via docker-compose.  
   - **Environment Variables Table**: A Markdown table documenting every required variable, its purpose, and its default fallback value.  
 - **Architecture Decision Records (ADR)**: Include a docs/adr/0001-calculate-first-reason-second.md file. This document must explicitly outline the decision to separate the Pandas math logic from the LLM prompt, explaining the risks of LLM arithmetic hallucinations and the benefit of deterministic supply chain formulas.  
-- **API Documentation (Swagger UI)**: Ensure FastAPI is configured to auto-generate the OpenAPI schema so the hiring manager can test the backend directly at the /docs endpoint.  
+- **API Documentation (Swagger UI)**: Ensure FastAPI is configured to auto-generate the OpenAPI schema so users can test the backend directly at the /docs endpoint.  
 - **Inline Code Documentation**:  
   - Enforce Google-style Docstrings for all classes and functions.  
   - All functions must utilize explicit Python type hints (validated by mypy in the pre-commit hook).
@@ -274,10 +272,10 @@ The generated repository must adhere to the following documentation standards:
 **Q: The deepeval test must "extract the LLM's recommended Air Freight SKU from its generated Markdown." Should the LLM prompt be written to produce a clearly delimited section (e.g., a specific header or bold label) to make regex extraction reliable, or is free-form parsing acceptable?**
 A: clearly delimited section
 
-**Q: Is actual cloud deployment to Fly.io required for the submission, or is a working local `docker-compose up` sufficient for the hiring manager to evaluate the project?**
-A: Should be deployable to Fly.io for the hiring manager to evaluate the project.
+**Q: Is actual cloud deployment to Fly.io required, or is a working local `docker-compose up` sufficient?**
+A: Should be deployable to Fly.io for live demo purposes.
 
-**Q: For Langfuse and HyperDX observability: should these be configured against real cloud accounts (requiring API keys), or is a locally self-hosted Langfuse (via Docker) plus a stubbed/no-op OTLP exporter acceptable for local dev and the submission demo?**
+**Q: For Langfuse and HyperDX observability: should these be configured against real cloud accounts (requiring API keys), or is a locally self-hosted Langfuse (via Docker) plus a stubbed/no-op OTLP exporter acceptable for local dev?**
 A: locally self-hosted with a strecth goal to connect to real cloud accounts.
 
 **Q: The reqs specify "Claude 3.5 Sonnet" for production. Should the model ID be pinned to `claude-3-5-sonnet-20241022`, or is using the latest available Sonnet model (currently `claude-sonnet-4-6`) preferred?**
