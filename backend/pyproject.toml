@@ -11,6 +11,7 @@ dependencies = [
     "jinja2>=3.1.6",
     "langfuse>=4.3.1",
     "openai>=2.32.0",
+    "openarmature",
     "opentelemetry-api>=1.41.0",
     "opentelemetry-exporter-otlp>=1.41.0",
     "opentelemetry-sdk>=1.41.0",
@@ -22,6 +23,9 @@ dependencies = [
     "uvicorn>=0.44.0",
 ]
 
+[tool.uv.sources]
+openarmature = { path = "../../openarmature-python", editable = true }
+
 [tool.pytest.ini_options]
 markers = [
     "integration: live LLM tests (require running local LLM, deselected by default)",
@@ -30,10 +34,12 @@ addopts = "-m 'not integration'"
 filterwarnings = [
     "ignore::DeprecationWarning:deepeval",
 ]
+asyncio_mode = "auto"
 
 [dependency-groups]
 dev = [
     "pandas-stubs>=3.0.0.260204",
     "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
     "pytest-cov>=7.1.0",
 ]

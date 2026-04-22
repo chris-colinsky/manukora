@@ -38,9 +38,12 @@ sales-data.csv
     → backend/sop_engine.py    (Pandas: all supply chain math)
     → backend/schemas.py       (Pydantic validation)
     → backend/llm_service.py   (Factory: local OpenAI-compat OR prod Anthropic)
+    → backend/graph.py         (openarmature: orchestrates load → calc → payload → briefing)
     → backend/api.py           (FastAPI: GET /api/v1/generate-sop, GET /api/v1/download-pos)
     → frontend/app.py          (Streamlit: auto-loads on open, no user clicks required)
 ```
+
+**Backend orchestration**: `/generate-sop` runs through an [openarmature](https://github.com/LunarCommand/openarmature-python) graph compiled at lifespan startup. Nodes delegate to `sop_engine` / `llm_service`; the graph adds boundary validation (frozen + `extra="forbid"` `SOPState`) and makes the "calculate first, reason second" shape explicit in the topology. `/download-pos` bypasses the graph and calls `sop_engine` functions directly — it doesn't need the LLM half.
 
 **Backend** (`backend/`) and **Frontend** (`frontend/`) are separate microservices, each with their own `pyproject.toml`, `uv.lock`, and `Dockerfile`.
 

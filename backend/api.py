@@ -1,20 +1,35 @@
-"""FastAPI application: S&OP briefing generation and PO download endpoints."""
+"""FastAPI application: S&OP briefing generation and PO download endpoints.
+
+/generate-sop is orchestrated through an openarmature graph compiled at
+application startup. /download-pos bypasses the graph and calls the pure
+sop_engine functions directly — the LLM-free half of the pipeline is just
+Python and doesn't need a graph to stay readable.
+"""
 
 import csv
 import io
 import time
 from contextlib import asynccontextmanager
+from typing import cast
 
 import structlog
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
+from openarmature.graph import CompiledGraph, RuntimeGraphError, StateValidationError
 
 import config
-import llm_service
+import graph
 import sop_engine
 import telemetry
+from graph import SOPState
 from schemas import RedFlagItem, SOPMetrics, SOPResponse
+
+
+# Compiled once at lifespan startup and reused per request. Module-level
+# (rather than app.state) keeps the handlers closure-simple — they read
+# `_graph` directly without a `Request` injection.
+_graph: CompiledGraph | None = None
 
 
 @asynccontextmanager
@@ -26,6 +41,12 @@ async def lifespan(_app: FastAPI):
     # --- Startup ---
     telemetry.setup()
 
+    # Compile the S&OP graph once at startup. Any structural problem
+    # (dangling edge, unreachable node, reducer conflict) surfaces here
+    # rather than on the first request.
+    global _graph
+    _graph = graph.build_graph()
+
     log = structlog.get_logger(__name__)
     log.info(
         "application_started",
@@ -35,6 +56,9 @@ async def lifespan(_app: FastAPI):
         langfuse_configured=bool(
             config.LANGFUSE_PUBLIC_KEY and config.LANGFUSE_SECRET_KEY
         ),
+        graph_compiled=True,
+        graph_entry=_graph.entry,
+        graph_nodes=list(_graph.nodes.keys()),
     )
 
     yield
@@ -87,11 +111,18 @@ def _build_router():
         response_model=SOPResponse,
         summary="Generate weekly S&OP briefing",
     )
-    def generate_sop() -> SOPResponse:
+    async def generate_sop() -> SOPResponse:
         """Read sales data, run all supply chain calculations, and generate an LLM briefing.
 
-        No request payload required. The CSV path is configured via the DATA_FILE_PATH
-        environment variable (default: data/sales-data.csv).
+        Orchestrated through the openarmature graph compiled at application
+        startup (`load → calculate → build_payload → briefing → END`).
+        Each node contributes a typed partial update; the engine validates
+        `SOPState` at every merge boundary. LLM concerns (prompt loading,
+        retry, tracing) live inside `briefing_node` — the graph itself is
+        LLM-agnostic per openarmature charter §3.1 Principle 2.
+
+        No request payload required. The CSV path is configured via the
+        DATA_FILE_PATH environment variable (default: data/sales-data.csv).
 
         Returns:
             SOPResponse containing KPI metrics, at-risk SKU data, and the LLM briefing.
@@ -100,28 +131,43 @@ def _build_router():
         start_time = time.monotonic()
         logger.info("sop_generation_started")
 
-        calculated_df = _load_calculated_df()
-
-        payload = sop_engine.build_llm_payload(calculated_df)
-
-        skus_at_risk = int(calculated_df["Is_At_Risk"].sum())
-        logger.info(
-            "generating_llm_briefing",
-            skus_at_risk=skus_at_risk,
-            payload_skus=len(payload.get("all_skus", [])),
-            at_risk_skus=len(payload.get("skus_at_risk", [])),
-            poor_performers=len(payload.get("poor_performers", [])),
-        )
+        assert _graph is not None, "graph not compiled; lifespan startup didn't run"
 
         try:
-            briefing = llm_service.generate_briefing(payload)
-        except Exception as exc:
-            logger.error("llm_call_failed", error=str(exc), exc_info=True)
+            final = cast(
+                SOPState,
+                await _graph.invoke(SOPState(file_path=config.DATA_FILE_PATH)),
+            )
+        except StateValidationError as exc:
+            # Merged state failed schema validation — bad field name or type
+            # returned by a node. Not recoverable at the graph level.
+            logger.error("graph_state_validation_failed", fields=exc.fields, error=str(exc))
             raise HTTPException(
                 status_code=500,
-                detail=f"LLM generation failed: {exc}",
+                detail=f"State validation error: {exc}",
+            )
+        except RuntimeGraphError as exc:
+            # NodeException / EdgeException / ReducerError / RoutingError all
+            # carry `recoverable_state` if we wanted to surface a partial
+            # result. For now, log and return 500.
+            logger.error(
+                "graph_execution_failed",
+                error_class=type(exc).__name__,
+                error=str(exc),
+                exc_info=True,
+            )
+            raise HTTPException(
+                status_code=500,
+                detail=f"Pipeline failure ({type(exc).__name__}): {exc}",
             )
 
+        # Graph post-condition: calculated_df is set by calc_node, briefing
+        # is set by briefing_node. Both are reachable from entry via static
+        # edges, so if we got here, both ran successfully.
+        calculated_df = final.calculated_df
+        assert calculated_df is not None, "calc_node should have set calculated_df"
+
+        skus_at_risk = int(calculated_df["Is_At_Risk"].sum())
         at_risk_df = calculated_df[calculated_df["Is_At_Risk"]]
         red_flag_data = [
             RedFlagItem(
@@ -144,15 +190,16 @@ def _build_router():
             "sop_generation_completed",
             total_m4_revenue=metrics.total_m4_revenue,
             skus_at_risk=metrics.skus_at_risk,
-            briefing_length=len(briefing),
+            briefing_length=len(final.briefing),
             latency_seconds=round(elapsed, 2),
+            trace=final.trace,
         )
 
         return SOPResponse(
             status="success",
             metrics=metrics,
             red_flag_data=red_flag_data,
-            llm_briefing=briefing,
+            llm_briefing=final.briefing,
         )
 
     @router.get(

@@ -124,7 +124,7 @@ This project is also a demonstration of AI-assisted software development. Every 
 flowchart LR
     subgraph backend[Backend Service]
         CSV[(sales-data.csv)]
-        ENGINE[sop_engine.py\nPandas]
+        PIPELINE[openarmature graph\ngraph.py + sop_engine.py\n+ llm_service.py]
         API[FastAPI\napi.py]
     end
 
@@ -142,8 +142,8 @@ flowchart LR
         HYPERDX[HyperDX OTLP]
     end
 
-    CSV --> ENGINE
-    ENGINE --> API
+    CSV --> PIPELINE
+    PIPELINE --> API
     API --> LLM
     API --> LOCAL
     API --> LANGFUSE
@@ -153,6 +153,23 @@ flowchart LR
 ```
 
 **Key architectural decision (ADR 0001):** All arithmetic is performed in Python/Pandas before the LLM is called. The LLM never sees raw CSV data — only a pre-computed JSON payload. This eliminates arithmetic hallucination risk. See [`_docs/adr/0001-calculate-first-reason-second.md`](_docs/adr/0001-calculate-first-reason-second.md).
+
+### Pipeline topology
+
+The backend's `/generate-sop` endpoint is orchestrated through an [openarmature](https://github.com/LunarCommand/openarmature-python) graph compiled once at application startup:
+
+```mermaid
+flowchart LR
+    CSV[(sales-data.csv)] --> LOAD[load]
+    LOAD --> CALC[calculate]
+    CALC --> PAYLOAD[build_payload]
+    PAYLOAD --> BRIEFING[briefing]
+    BRIEFING --> END((END))
+```
+
+Each node is an async function that receives a typed `SOPState` and returns a partial update. The engine validates every merge against the state schema — a node returning a misspelled field name fails loudly with `StateValidationError` instead of silently dropping data. LLM concerns (prompt loading, retry, Langfuse tracing) live inside the `briefing` node; the graph itself is LLM-agnostic by design.
+
+See [`_docs/openarmature-integration.md`](_docs/openarmature-integration.md) for a deeper walkthrough of the graph layer.
 
 ## Local Development (uv)
 
